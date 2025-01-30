@@ -4,7 +4,7 @@ from models.user_model import User
 from models.profile_model import Profile
 from sqlalchemy.orm import sessionmaker
 from werkzeug.security import generate_password_hash, check_password_hash
-from database import engine
+from database.base import engine
 from flask_jwt_extended import create_access_token
 
 # Create a session
