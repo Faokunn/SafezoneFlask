@@ -5,6 +5,7 @@ from sqlalchemy.orm import sessionmaker
 import os
 from dotenv import load_dotenv
 
+
 load_dotenv()
 
 # Get the database URL from environment variables

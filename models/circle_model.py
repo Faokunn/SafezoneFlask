@@ -2,7 +2,6 @@ from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Text, DateT
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from database.base import Base
-from .association_tables import group_members  # Import the group_members table
 
 class Circle(Base):
     __tablename__ = 'circle'
@@ -13,6 +12,5 @@ class Circle(Base):
     # Many-to-many relationship between Circle and User
     members = relationship(
         "User", 
-        secondary=group_members, 
         back_populates="circles"
     )

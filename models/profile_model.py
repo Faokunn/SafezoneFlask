@@ -4,7 +4,7 @@ from datetime import datetime
 from database.base import Base
 
 class Profile(Base):
-    __tablename__ = 'Profile'
+    __tablename__ = 'profile'
     id = Column(Integer, primary_key=True)
     first_name = Column(String(80), nullable=False)
     last_name = Column(String(80), nullable=False)

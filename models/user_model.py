@@ -1,7 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from database.base import Base
-from .association_tables import group_members  # Import the group_members table
 
 class User(Base):
     __tablename__ = 'users'
@@ -18,6 +17,5 @@ class User(Base):
 
     circles = relationship(
         "Circle", 
-        secondary=group_members, 
         back_populates="members"
     )
