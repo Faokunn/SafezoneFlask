@@ -14,5 +14,4 @@ class Notification(Base):
     updated_at = Column(DateTime, default=datetime.now(), onupdate=datetime.now())
     type = Column(String(80), nullable=False)
 
-    user = relationship("User", back_populates="notifications")
-    
+    user = relationship("User", back_populates="notifications")  # Correct relationship

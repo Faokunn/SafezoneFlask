@@ -10,7 +10,3 @@ class Circle(Base):
     is_active = Column(Boolean, default=True)
 
     # Many-to-many relationship between Circle and User
-    members = relationship(
-        "User", 
-        back_populates="circles"
-    )
