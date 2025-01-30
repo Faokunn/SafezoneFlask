@@ -76,7 +76,7 @@ def create_account():
         return jsonify({"error": "Username or email already exists"}), 400
 
 
-# Login Route (No JWT token logic)
+# Login Route (Return user and profile data)
 @user_controller.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -89,9 +89,27 @@ def login():
     user_obj = session.query(User).filter_by(email=email).first()
 
     if user_obj and user_obj.password == password:  # Compare plain-text passwords
-        return jsonify({"message": "Login successful"}), 200
+        profile_obj = session.query(Profile).filter_by(user_id=user_obj.id).first()
+        
+        # Return user and profile data
+        return jsonify({
+            "user": {
+                "id": user_obj.id,
+                "username": user_obj.username,
+                "email": user_obj.email,
+            },
+            "profile": {
+                "address": profile_obj.address,
+                "first_name": profile_obj.first_name.upper(),
+                "last_name": profile_obj.last_name.upper(),
+                "is_admin": profile_obj.is_admin,
+                "is_girl": profile_obj.is_girl,
+                "is_verified": profile_obj.is_verified,
+            }
+        }), 200
 
     return jsonify({"error": "Invalid credentials"}), 401
+
 
 
 # Get All Users Route - NO TOKEN REQUIRED
