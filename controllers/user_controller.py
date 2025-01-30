@@ -38,7 +38,7 @@ def create_account():
     
     username = data.get('username')
     email = data.get('email')
-    password = data.get('password')
+    password = data.get('password')  # No hashing now
     address = data.get('address')
     first_name = data.get('first_name')
     last_name = data.get('last_name')
@@ -51,12 +51,9 @@ def create_account():
     if not username or not email or not password or not address or not first_name or not last_name:
         return jsonify({"error": "Missing required fields"}), 400
 
-    # Hash the password
-    hashed_password = generate_password_hash(password, method='sha256')
-
     try:
-        # Create user
-        new_user = User(username=username, email=email, password=hashed_password)
+        # Create user (no password hashing)
+        new_user = User(username=username, email=email, password=password)  # Store password as plain text
         session.add(new_user)
         session.commit()
 
@@ -77,6 +74,7 @@ def create_account():
     except IntegrityError:
         session.rollback()
         return jsonify({"error": "Username or email already exists"}), 400
+
 
 
 # Login Route
