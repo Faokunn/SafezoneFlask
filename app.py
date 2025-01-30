@@ -13,13 +13,15 @@ from models.incident_report_status_history import IncidentReportStatusHistory
 from models.dangerzone_model import DangerZone
 from models.contacts_model import ContactModel 
 from models.circle_model import Circle
+from flasgger import Swagger
 
 from controllers.user_controller import user_controller
 from controllers.contacts_controller import contact_controller  # Import contacts_controller
-
+from controllers.incident_report_controller import incident_report_controller
 load_dotenv()
 
 app = Flask(__name__)
+swagger = Swagger(app)
 
 # Connect to the database
 url = os.getenv("DATABASE_URL")
@@ -31,6 +33,30 @@ Base.metadata.create_all(bind=engine)
 # Register the blueprints
 app.register_blueprint(user_controller, url_prefix='/user')
 app.register_blueprint(contact_controller, url_prefix='/contacts')  # Register contacts controller
+app.register_blueprint(incident_report_controller, url_prefix='/incident-reports')
+
+app.config['SWAGGER'] = {
+    'title': 'Flask Incident Reports API',
+    'uiversion': 3,
+    'definitions': {
+        'IncidentReport': {
+            'type': 'object',
+            'properties': {
+                'id': {'type': 'integer'},
+                'danger_zone_id': {'type': 'integer'},
+                'user_id': {'type': 'integer'},
+                'description': {'type': 'string'},
+                'report_date': {'type': 'string', 'format': 'date'},
+                'report_time': {'type': 'string', 'format': 'time'},
+                'images': {'type': 'array', 'items': {'type': 'string'}},
+                'status': {'type': 'string'},
+                'report_timestamp': {'type': 'string', 'format': 'date-time'},
+                'updated_at': {'type': 'string', 'format': 'date-time'},
+            }
+        }
+    }
+}
+
 
 @app.route('/')
 def home():
