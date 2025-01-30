@@ -3,7 +3,7 @@ from models.incidentreport_model import IncidentReport
 from sqlalchemy.orm import sessionmaker
 from database.base import engine
 from datetime import datetime
-from flask import HTTPException
+from werkzeug.exceptions import HTTPException
 from zoneinfo import ZoneInfo
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
