@@ -15,6 +15,7 @@ from models.contacts_model import ContactModel
 from models.circle_model import Circle
 from flasgger import Swagger
 from models.groupmembers_model import GroupMember
+from flask_cors import CORS
 
 from controllers.user_controller import user_controller
 from controllers.contacts_controller import contact_controller 
@@ -28,7 +29,7 @@ load_dotenv()
 
 app = Flask(__name__)
 swagger = Swagger(app)
-
+CORS(app)
 # Connect to the database
 url = os.getenv("DATABASE_URL")
 connection = psycopg2.connect(url)
