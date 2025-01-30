@@ -14,14 +14,22 @@ from models.dangerzone_model import DangerZone
 from models.contacts_model import ContactModel 
 from models.circle_model import Circle
 from models.association_tables import group_members
+from controllers.user_controller import user_controller  # Import user_controller
 
 load_dotenv()
 
 app = Flask(__name__)
-Base.metadata.create_all(bind=engine)
+# Connect to the database
 url = os.getenv("DATABASE_URL")
 connection = psycopg2.connect(url)
+Base.metadata.create_all(bind=engine)
 
+
+# Register the user blueprint
+app.register_blueprint(user_controller, url_prefix='/user')
 @app.route('/')
 def home():
     return 'Welcome to the Flask API!'
+
+if __name__ == '__main__':
+    app.run(debug=True)
