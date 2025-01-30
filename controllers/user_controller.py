@@ -81,20 +81,21 @@ def create_account():
 @user_controller.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    username = data.get('username')
+    email = data.get('email')  # Using email instead of username
     password = data.get('password')
 
-    if not username or not password:
-        return jsonify({"error": "Missing username or password"}), 400
+    if not email or not password:
+        return jsonify({"error": "Missing email or password"}), 400
 
-    user_obj = session.query(User).filter_by(username=username).first()
+    user_obj = session.query(User).filter_by(email=email).first() 
 
-    if user_obj and check_password_hash(user_obj.password, password):
+    if user_obj and user_obj.password == password: 
         # Create JWT token
         access_token = create_access_token(identity=user_obj.id)
         return jsonify({"access_token": access_token}), 200
 
     return jsonify({"error": "Invalid credentials"}), 401
+
 
 # Get All Users Route - NO TOKEN REQUIRED
 @user_controller.route('/users', methods=['GET'])
