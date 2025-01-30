@@ -35,14 +35,14 @@ def format_user_data(user_obj, profile_obj):
 @user_controller.route('/create_account', methods=['POST'])
 def create_account():
     data = request.get_json()
-    
+
     username = data.get('username')
     email = data.get('email')
     password = data.get('password')  # No hashing now
     address = data.get('address')
     first_name = data.get('first_name')
     last_name = data.get('last_name')
-    
+
     # Get optional profile values with defaults if not provided
     is_admin = data.get('is_admin', False)  # Default to False
     is_girl = data.get('is_girl', True)     # Default to True
@@ -76,7 +76,6 @@ def create_account():
         return jsonify({"error": "Username or email already exists"}), 400
 
 
-
 # Login Route
 @user_controller.route('/login', methods=['POST'])
 def login():
@@ -87,15 +86,14 @@ def login():
     if not email or not password:
         return jsonify({"error": "Missing email or password"}), 400
 
-    user_obj = session.query(User).filter_by(email=email).first() 
+    user_obj = session.query(User).filter_by(email=email).first()
 
-    if user_obj and user_obj.password == password: 
+    if user_obj and user_obj.password == password:  # Compare plain-text passwords
         # Create JWT token
         access_token = create_access_token(identity=user_obj.id)
         return jsonify({"access_token": access_token}), 200
 
     return jsonify({"error": "Invalid credentials"}), 401
-
 
 # Get All Users Route - NO TOKEN REQUIRED
 @user_controller.route('/users', methods=['GET'])
