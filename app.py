@@ -13,9 +13,11 @@ from models.incident_report_status_history import IncidentReportStatusHistory
 from models.dangerzone_model import DangerZone
 from models.contacts_model import ContactModel 
 from models.circle_model import Circle
+from models.groupmembers_model import GroupMember
 
 from controllers.user_controller import user_controller
 from controllers.contacts_controller import contact_controller  # Import contacts_controller
+from controllers.circle_controller import circle_controller
 
 load_dotenv()
 
@@ -30,7 +32,8 @@ Base.metadata.create_all(bind=engine)
 
 # Register the blueprints
 app.register_blueprint(user_controller, url_prefix='/user')
-app.register_blueprint(contact_controller, url_prefix='/contacts')  # Register contacts controller
+app.register_blueprint(contact_controller, url_prefix='/contacts')
+app.register_blueprint(circle_controller, url_prefix='/circle')  # Register contacts controller
 
 @app.route('/')
 def home():

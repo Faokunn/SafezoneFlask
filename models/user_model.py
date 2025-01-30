@@ -9,8 +9,13 @@ class User(Base):
     email = Column(String(120), unique=True, nullable=False)
     password = Column(String(128), nullable=False)
 
+    # Relationships with other models
     notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
     contacts = relationship("ContactModel", back_populates="user", cascade="all, delete-orphan")
     sos_alerts = relationship("SOSAlerter", back_populates="user", cascade="all, delete-orphan")
     profile = relationship("Profile", back_populates="user", uselist=False, cascade="all, delete-orphan")
     incident_reports = relationship("IncidentReport", back_populates="user", cascade="all, delete-orphan")
+    
+    # Many-to-many relationship with Circle through group_members
+    circles = relationship("Circle", secondary="group_members", back_populates="members")
+
