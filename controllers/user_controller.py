@@ -86,7 +86,7 @@ def login():
 
     return jsonify({"error": "Invalid credentials"}), 401
 
-# Get All Users Route
+# Get All Users Route - NO TOKEN REQUIRED
 @user_controller.route('/users', methods=['GET'])
 def get_all_users():
     users = session.query(User).all()
