@@ -3,58 +3,47 @@ from models.incidentreport_model import IncidentReport
 from sqlalchemy.orm import sessionmaker
 from database.base import engine
 from datetime import datetime
-from werkzeug.exceptions import HTTPException
 from zoneinfo import ZoneInfo
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import sessionmaker
 from models.user_model import User
 
-# Database connection and session
 Session = sessionmaker(bind=engine)
 
-def handle_exception(e: Exception):
-    """Handle exceptions by re-raising HTTPExceptions."""
-    if isinstance(e, HTTPException):
-        raise e
-    raise HTTPException(status_code=500, detail=str(e))
-
 def parse_report_timestamp(timestamp):
-    """Parse the report timestamp and convert it to Asia/Manila timezone."""
     try:
         if isinstance(timestamp, str):
             return datetime.fromisoformat(timestamp.replace("Z", "+00:00")).astimezone(ZoneInfo("Asia/Manila"))
         return timestamp.astimezone(ZoneInfo("Asia/Manila"))
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid report_timestamp: {str(e)}")
+        abort(400, description=f"Invalid report_timestamp: {str(e)}")
 
 def get_or_create_danger_zone(session, latitude, longitude, radius, name, danger_zone_id=None):
-    """Fetch or create a Danger Zone based on the data."""
     if danger_zone_id:
         danger_zone = session.query(DangerZone).filter_by(id=danger_zone_id).first()
-        if not danger_zone:
-            raise HTTPException(status_code=404, detail="Danger Zone not found.")
-    else:
-        danger_zone = session.query(DangerZone).filter(
-            DangerZone.latitude == latitude, DangerZone.longitude == longitude
-        ).first()
+        if danger_zone:
+            return danger_zone 
+    
+    danger_zone = session.query(DangerZone).filter(
+        DangerZone.latitude == latitude, DangerZone.longitude == longitude
+    ).first()
 
-        if not danger_zone:
-            danger_zone = DangerZone(
-                latitude=latitude,
-                longitude=longitude,
-                radius=radius,
-                name=name,
-                is_verified=False
-            )
-            session.add(danger_zone)
-            session.commit()
+    if not danger_zone:
+        danger_zone = DangerZone(
+            latitude=latitude,
+            longitude=longitude,
+            radius=radius,
+            name=name,
+            is_verified=False
+        )
+        session.add(danger_zone)
+        session.commit()
 
     return danger_zone
 
 def get_all_incidents(session):
     try:
         incidents = session.query(IncidentReport).all()
-        return incidents
+        return [incident.to_dict() for incident in incidents]
     except Exception as e:
         return str(e)
 
@@ -87,14 +76,15 @@ def get_incident_report_by_user_id_service(user_id, session):
         return incidents
     except Exception as e:
         return str(e)
+from flask import abort
 def create_incident_report_service(data, session):
     try:
         user = session.query(User).filter_by(id=data['user_id']).first()
         if not user:
-            return {"message": "User not found"}, 404
-        
+            abort(404, description="User not found") 
+
         report_timestamp = parse_report_timestamp(data['report_timestamp'])
-        
+
         danger_zone = get_or_create_danger_zone(
             session, 
             data['latitude'], 
@@ -103,7 +93,7 @@ def create_incident_report_service(data, session):
             data['name'], 
             danger_zone_id=data.get('danger_zone_id')
         )
-        
+
         current_time = datetime.now()
         incident_report = IncidentReport(
             user_id=data['user_id'],
@@ -111,18 +101,18 @@ def create_incident_report_service(data, session):
             description=data['description'],
             report_date=data['report_date'],
             report_time=data['report_time'],
-            images=data.get('images', []),  # Default to empty list if no images
+            images=data.get('images', []), 
             report_timestamp=report_timestamp,
             updated_at=current_time
         )
-        
+
         session.add(incident_report)
         try:
             session.commit()
         except IntegrityError as e:
             session.rollback()
-            return {"message": f"Error creating incident report: {str(e)}"}, 400
-        
+            abort(400, description=f"Error creating incident report: {str(e)}")  
+
         return {
             "message": "Incident report created successfully",
             "incident_report_id": incident_report.id,
@@ -131,25 +121,52 @@ def create_incident_report_service(data, session):
 
     except Exception as e:
         session.rollback()
-        handle_exception(e)
-        return {"message": "An error occurred."}, 500
+        abort(500, description=f"An error occurred: {str(e)}")  
+
     
 def update_incident_report_service(incident_id, data, session):
     try:
         incident = session.query(IncidentReport).filter_by(id=incident_id).first()
         if not incident:
             return None
+        
         incident.description = data.get('description', incident.description)
         incident.report_date = data.get('report_date', incident.report_date)
         incident.report_time = data.get('report_time', incident.report_time)
         incident.status = data.get('status', incident.status)
         incident.images = data.get('images', incident.images)
-        incident.danger_zone_id = data.get('danger_zone_id', incident.danger_zone_id)
+
+        new_latitude = data.get('latitude')
+        new_longitude = data.get('longitude')
+        new_radius = data.get('radius') 
+        new_name = data.get('name')  
+
+        if new_latitude is not None and new_longitude is not None:
+            existing_danger_zone = session.query(DangerZone).filter_by(latitude=new_latitude, longitude=new_longitude).first()
+
+            if existing_danger_zone:
+                incident.danger_zone_id = existing_danger_zone.id
+            else:
+                new_danger_zone = DangerZone(
+                    latitude=new_latitude,
+                    longitude=new_longitude,
+                    radius=new_radius if new_radius else 100,  
+                    name=new_name if new_name else "Unknown",
+                    is_verified=False
+                )
+                session.add(new_danger_zone)
+                session.commit() 
+                incident.danger_zone_id = new_danger_zone.id  
+
         session.commit()
-        return {"message": "Incident report updated successfully", "incident_report": incident}
+
+        return {
+            "message": "Incident report updated successfully",
+            "incident_report": incident.to_dict()
+        }
     except Exception as e:
         session.rollback()
-        return str(e)
+        return {"error": str(e)}
 
 def delete_incident_report_service(incident_id, session):
     try:
@@ -165,7 +182,6 @@ def delete_incident_report_service(incident_id, session):
 
 def get_status_history_service(session, incident_id):
     try:
-        # Add logic to fetch incident status history
         return []
     except Exception as e:
         return str(e)
