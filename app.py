@@ -17,10 +17,12 @@ from flasgger import Swagger
 from models.groupmembers_model import GroupMember
 
 from controllers.user_controller import user_controller
-from controllers.contacts_controller import contact_controller  # Import contacts_controller
+from controllers.contacts_controller import contact_controller 
 from controllers.circle_controller import circle_controller
 from controllers.incident_report_controller import incident_report_controller
 from controllers.admin_incident_report_controller import admin_incident_report_controller
+from controllers.danger_zone_controller import danger_zone_controller
+
 
 load_dotenv()
 
@@ -40,6 +42,8 @@ app.register_blueprint(contact_controller, url_prefix='/contacts')
 app.register_blueprint(circle_controller, url_prefix='/circle')
 app.register_blueprint(incident_report_controller, url_prefix='/incident-reports')
 app.register_blueprint(admin_incident_report_controller, url_prefix='/admin/incident-reports')
+app.register_blueprint(danger_zone_controller, url_prefix='/danger-zone')
+
 
 app.config['SWAGGER'] = {
     'title': 'Flask Incident Reports API',

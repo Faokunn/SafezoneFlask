@@ -13,3 +13,13 @@ class DangerZone(Base):
     name = Column(String(80), nullable=False)
 
     incident_reports = relationship("IncidentReport", back_populates="danger_zone", cascade="all, delete-orphan")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "is_verified": self.is_verified,
+            "latitude": self.latitude,
+            "longitude": self.longitude,
+            "radius": self.radius,
+            "name": self.name,
+        }
