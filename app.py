@@ -15,18 +15,23 @@ from models.contacts_model import ContactModel
 from models.circle_model import Circle
 
 from controllers.user_controller import user_controller
+from controllers.contacts_controller import contact_controller  # Import contacts_controller
 
 load_dotenv()
 
 app = Flask(__name__)
+
 # Connect to the database
 url = os.getenv("DATABASE_URL")
 connection = psycopg2.connect(url)
+
+# Create tables in the database
 Base.metadata.create_all(bind=engine)
 
-
-# Register the user blueprint
+# Register the blueprints
 app.register_blueprint(user_controller, url_prefix='/user')
+app.register_blueprint(contact_controller, url_prefix='/contacts')  # Register contacts controller
+
 @app.route('/')
 def home():
     return 'Welcome to the Flask API!'

@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from sqlalchemy.exc import IntegrityError
 from models.user_model import User
 from models.profile_model import Profile
+from models.contacts_model import ContactModel  # Import the ContactModel
 from sqlalchemy.orm import sessionmaker
 from werkzeug.security import generate_password_hash, check_password_hash
 from database.base import engine
@@ -30,6 +31,20 @@ def format_user_data(user_obj, profile_obj):
             "is_verified": profile_obj.is_verified,
         }
     }
+
+# Emergency contacts for Dagupan City
+emergency_contacts = [
+    {"name": "Philippine National Police (PNP)", "phone_number": "0916-525-6802"},
+    {"name": "Ambulance", "phone_number": "0917-184-2611"},
+    {"name": "Firefighter", "phone_number": "0917-184-2611"},
+    {"name": "City Disaster Risk Reduction & Management Office (CDRRMO)", "phone_number": "0968-444-9598"},
+    {"name": "City Health Office (CHO)", "phone_number": "0933-861-6088"},
+    {"name": "Philippine Red Cross Dagupan", "phone_number": "0928-559-2701"},
+    {"name": "Public Order & Safety Office (POSO)", "phone_number": "0967-435-7097"},
+    {"name": "Anti-Violence Against Women and Children (VAWC) Helpline", "phone_number": "0933-378-8888"},
+    {"name": "Anti-Bullying Helpline", "phone_number": "0960-260-6036"},
+    {"name": "Anti-Suicide Helpline", "phone_number": "0969-045-1111"},
+]
 
 # Create Account Route
 @user_controller.route('/create_account', methods=['POST'])
@@ -70,7 +85,17 @@ def create_account():
         session.add(profile)
         session.commit()
 
-        return jsonify({"message": "User and profile created successfully"}), 201
+        # Add emergency contacts
+        for contact in emergency_contacts:
+            new_contact = ContactModel(
+                user_id=new_user.id,
+                name=contact["name"],
+                phone_number=contact["phone_number"]
+            )
+            session.add(new_contact)
+        session.commit()
+
+        return jsonify({"message": "User, profile, and emergency contacts created successfully"}), 201
     except IntegrityError:
         session.rollback()
         return jsonify({"error": "Username or email already exists"}), 400
