@@ -5,6 +5,9 @@ from database.base import engine
 from datetime import datetime
 from flask import HTTPException
 from zoneinfo import ZoneInfo
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import sessionmaker
+from models.user_model import User
 
 # Database connection and session
 Session = sessionmaker(bind=engine)
@@ -84,25 +87,53 @@ def get_incident_report_by_user_id_service(user_id, session):
         return incidents
     except Exception as e:
         return str(e)
-
 def create_incident_report_service(data, session):
     try:
-        incident = IncidentReport(
+        user = session.query(User).filter_by(id=data['user_id']).first()
+        if not user:
+            return {"message": "User not found"}, 404
+        
+        report_timestamp = parse_report_timestamp(data['report_timestamp'])
+        
+        danger_zone = get_or_create_danger_zone(
+            session, 
+            data['latitude'], 
+            data['longitude'], 
+            data['radius'], 
+            data['name'], 
+            danger_zone_id=data.get('danger_zone_id')
+        )
+        
+        current_time = datetime.now()
+        incident_report = IncidentReport(
             user_id=data['user_id'],
-            danger_zone_id=data['danger_zone_id'],
+            danger_zone_id=danger_zone.id,
             description=data['description'],
             report_date=data['report_date'],
             report_time=data['report_time'],
-            images=data['images'],
-            report_timestamp=datetime.now(),
+            images=data.get('images', []),  # Default to empty list if no images
+            report_timestamp=report_timestamp,
+            updated_at=current_time
         )
-        session.add(incident)
-        session.commit()
-        return {"message": "Incident report created successfully", "incident_report_id": incident.id}
+        
+        session.add(incident_report)
+        try:
+            session.commit()
+        except IntegrityError as e:
+            session.rollback()
+            return {"message": f"Error creating incident report: {str(e)}"}, 400
+        
+        return {
+            "message": "Incident report created successfully",
+            "incident_report_id": incident_report.id,
+            "is_verified": danger_zone.is_verified
+        }, 200
+
     except Exception as e:
         session.rollback()
-        return str(e)
-
+        handle_exception(e)
+        return {"message": "An error occurred."}, 500
+    
 def update_incident_report_service(incident_id, data, session):
     try:
         incident = session.query(IncidentReport).filter_by(id=incident_id).first()
