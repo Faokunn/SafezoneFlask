@@ -3,18 +3,7 @@ import psycopg2
 from dotenv import load_dotenv
 from flask import Flask
 from database.base import Base, engine
-from models.user_model import User
-from models.sosalerts_model import SOSAlerter
-from models.safezone_model import SafeZone
-from models.profile_model import Profile
-from models.notifications import Notification
-from models.incidentreport_model import IncidentReport
-from models.incident_report_status_history import IncidentReportStatusHistory 
-from models.dangerzone_model import DangerZone
-from models.contacts_model import ContactModel 
-from models.circle_model import Circle
 from flasgger import Swagger
-from models.groupmembers_model import GroupMember
 from flask_cors import CORS
 
 from controllers.user_controller import user_controller
@@ -23,6 +12,7 @@ from controllers.circle_controller import circle_controller
 from controllers.incident_report_controller import incident_report_controller
 from controllers.admin_incident_report_controller import admin_incident_report_controller
 from controllers.danger_zone_controller import danger_zone_controller
+from controllers.safe_zone_controller import safe_zone_controller
 
 
 load_dotenv()
@@ -44,6 +34,7 @@ app.register_blueprint(circle_controller, url_prefix='/circle')
 app.register_blueprint(incident_report_controller, url_prefix='/incident-reports')
 app.register_blueprint(admin_incident_report_controller, url_prefix='/admin/incident-reports')
 app.register_blueprint(danger_zone_controller, url_prefix='/danger-zone')
+app.register_blueprint(safe_zone_controller, url_prefix='/safe-zone')
 
 
 app.config['SWAGGER'] = {
