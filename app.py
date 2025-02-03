@@ -9,6 +9,7 @@ from flask_cors import CORS
 from models.user_model import User
 from models.sosalerts_model import SOSAlerter
 from models.safezone_model import SafeZone
+from models.safe_zone_status_history import SafeZoneStatusHistory
 from models.profile_model import Profile
 from models.notifications import Notification
 from models.incidentreport_model import IncidentReport
