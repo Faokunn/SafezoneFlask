@@ -11,3 +11,21 @@ class SafeZone(Base):
     longitude = Column(Float, nullable=False)
     radius = Column(Float, nullable=False)
     name = Column(String(80), nullable=False)
+    scale = Column(Integer, nullable=False)
+    description = Column(Text, nullable=False)
+    time_of_day = Column(String(30), nullable=False)
+    frequency = Column(String(30), nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "is_verified": self.is_verified,
+            "latitude": self.latitude,
+            "longitude": self.longitude,
+            "radius": self.radius,
+            "name": self.name,
+            "scale": self.scale,
+            "description": self.description,
+            "time_of_day": self.time_of_day,
+            "frequency": self.frequency
+        }
