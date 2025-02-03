@@ -52,7 +52,7 @@ def get_incidents_by_status(status):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@incident_report_controller.route('/incidents/user/<int:user_id>', methods=['GET']) # TODO
+@incident_report_controller.route('/incidents/user/<int:user_id>', methods=['GET']) 
 def get_incidents_by_user(user_id):
     try:
         incidents = get_incident_report_by_user_id_service(user_id, session)

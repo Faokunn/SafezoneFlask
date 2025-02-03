@@ -6,6 +6,18 @@ from database.base import Base, engine
 from flasgger import Swagger
 from flask_cors import CORS
 
+from models.user_model import User
+from models.sosalerts_model import SOSAlerter
+from models.safezone_model import SafeZone
+from models.profile_model import Profile
+from models.notifications import Notification
+from models.incidentreport_model import IncidentReport
+from models.incident_report_status_history import IncidentReportStatusHistory 
+from models.dangerzone_model import DangerZone
+from models.contacts_model import ContactModel 
+from models.circle_model import Circle
+from models.groupmembers_model import GroupMember
+
 from controllers.user_controller import user_controller
 from controllers.contacts_controller import contact_controller 
 from controllers.circle_controller import circle_controller

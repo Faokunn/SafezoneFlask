@@ -6,6 +6,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from sqlalchemy.exc import IntegrityError
 from models.user_model import User
+from flask import abort
 
 Session = sessionmaker(bind=engine)
 
@@ -76,7 +77,7 @@ def get_incident_report_by_user_id_service(user_id, session):
         return incidents
     except Exception as e:
         return str(e)
-from flask import abort
+
 def create_incident_report_service(data, session):
     try:
         user = session.query(User).filter_by(id=data['user_id']).first()
