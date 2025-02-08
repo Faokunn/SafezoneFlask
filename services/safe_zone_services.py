@@ -83,6 +83,7 @@ def create_safe_zone_service(data, session):
             description=data["description"],
             time_of_day=data["time_of_day"],
             frequency=data["frequency"],
+            status="pending",
             report_timestamp=report_timestamp,
         )
         session.add(safe_zone)

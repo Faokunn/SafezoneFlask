@@ -13,10 +13,11 @@ class SafeZone(Base):
     longitude = Column(Float, nullable=False)
     radius = Column(Float, nullable=False)
     name = Column(String(80), nullable=False)
-    scale = Column(Integer, nullable=False)
+    scale = Column(Float, nullable=False)
     description = Column(Text, nullable=False)
     time_of_day = Column(String(30), nullable=False)
     frequency = Column(String(30), nullable=False)
+    status = Column(String, default="pending")
     report_timestamp = Column(TIMESTAMP(timezone=True), nullable=False)
 
     user = relationship("User", back_populates="safe_zones")
