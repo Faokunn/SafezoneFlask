@@ -6,6 +6,7 @@ from database.base import Base, engine
 from flasgger import Swagger
 from flask_cors import CORS
 
+
 from models.user_model import User
 from models.sosalerts_model import SOSAlerter
 from models.safezone_model import SafeZone
