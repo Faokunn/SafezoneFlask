@@ -35,5 +35,6 @@ class SafeZone(Base):
             "description": self.description,
             "time_of_day": self.time_of_day,
             "frequency": self.frequency,
+            "status": self.status,
             "report_timestamp": self.report_timestamp.isoformat() if self.report_timestamp else None
         }
