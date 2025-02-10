@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, Float, ForeignKey, Text, DateTime, Time
+from sqlalchemy import Column, Integer, String, Boolean, Float, ForeignKey, Text
 from sqlalchemy.types import TIMESTAMP
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -6,6 +6,7 @@ from database.base import Base
 
 class SafeZone(Base):
     __tablename__ = 'safe_zones'
+    
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     is_verified = Column(Boolean, default=False)
@@ -26,6 +27,7 @@ class SafeZone(Base):
     def to_dict(self):
         return {
             "id": self.id,
+            "user_id": self.user_id,
             "is_verified": self.is_verified,
             "latitude": self.latitude,
             "longitude": self.longitude,
@@ -36,5 +38,6 @@ class SafeZone(Base):
             "time_of_day": self.time_of_day,
             "frequency": self.frequency,
             "status": self.status,
-            "report_timestamp": self.report_timestamp.isoformat() if self.report_timestamp else None
+            "report_timestamp": self.report_timestamp.isoformat() if self.report_timestamp else None,
+            "status_history": [history.to_dict() for history in self.status_history] if self.status_history else []
         }

@@ -35,5 +35,6 @@ class IncidentReport(Base):
             "status": self.status,
             "report_timestamp": self.report_timestamp.isoformat() if self.report_timestamp else None,  
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,  
-            "danger_zone": self.danger_zone.to_dict() if self.danger_zone else None
+            "danger_zone": self.danger_zone.to_dict() if self.danger_zone else None,
+             "status_history": [history.to_dict() for history in self.status_history] if self.status_history else []
         }
