@@ -5,6 +5,8 @@ from flask import Flask
 from database.base import Base, engine
 from flasgger import Swagger
 from flask_cors import CORS
+import firebase_admin
+from firebase_admin import credentials, storage
 
 from models.user_model import User
 from models.sosalerts_model import SOSAlerter
@@ -41,6 +43,10 @@ connection = psycopg2.connect(url)
 # Create tables in the database
 Base.metadata.create_all(bind=engine)
 
+cred = credentials.Certificate("./safezone-11724-firebase-adminsdk-h4m0x-ffeafe79ff.json")
+firebase_admin.initialize_app(cred, {'storageBucket': 'safezone-11724.firebasestorage.app'})
+
+
 # Register the blueprints
 app.register_blueprint(user_controller, url_prefix='/user')
 app.register_blueprint(contact_controller, url_prefix='/contacts')
@@ -52,27 +58,27 @@ app.register_blueprint(danger_zone_controller, url_prefix='/danger-zone')
 app.register_blueprint(safe_zone_controller, url_prefix='/safe-zone')
 
 
-app.config['SWAGGER'] = {
-    'title': 'Flask Incident Reports API',
-    'uiversion': 3,
-    'definitions': {
-        'IncidentReport': {
-            'type': 'object',
-            'properties': {
-                'id': {'type': 'integer'},
-                'danger_zone_id': {'type': 'integer'},
-                'user_id': {'type': 'integer'},
-                'description': {'type': 'string'},
-                'report_date': {'type': 'string', 'format': 'date'},
-                'report_time': {'type': 'string', 'format': 'time'},
-                'images': {'type': 'array', 'items': {'type': 'string'}},
-                'status': {'type': 'string'},
-                'report_timestamp': {'type': 'string', 'format': 'date-time'},
-                'updated_at': {'type': 'string', 'format': 'date-time'},
-            }
-        }
-    }
-}
+# app.config['SWAGGER'] = {
+#     'title': 'Flask Incident Reports API',
+#     'uiversion': 3,
+#     'definitions': {
+#         'IncidentReport': {
+#             'type': 'object',
+#             'properties': {
+#                 'id': {'type': 'integer'},
+#                 'danger_zone_id': {'type': 'integer'},
+#                 'user_id': {'type': 'integer'},
+#                 'description': {'type': 'string'},
+#                 'report_date': {'type': 'string', 'format': 'date'},
+#                 'report_time': {'type': 'string', 'format': 'time'},
+#                 'images': {'type': 'array', 'items': {'type': 'string'}},
+#                 'status': {'type': 'string'},
+#                 'report_timestamp': {'type': 'string', 'format': 'date-time'},
+#                 'updated_at': {'type': 'string', 'format': 'date-time'},
+#             }
+#         }
+#     }
+# }
 
 
 @app.route('/')

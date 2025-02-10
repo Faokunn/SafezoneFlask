@@ -7,14 +7,78 @@ from zoneinfo import ZoneInfo
 from sqlalchemy.exc import IntegrityError
 from models.user_model import User
 from flask import abort
+from firebase_admin import storage
+import pytz
 
 Session = sessionmaker(bind=engine)
 
+
+
+def upload_images_to_firebase(files):
+    uploaded_urls = []
+    
+    if not files:
+        return uploaded_urls 
+
+    bucket = storage.bucket() 
+    
+    for file in files:
+        filename = file.filename.lower()
+        if not filename.endswith((".jpg", ".jpeg", ".png")):
+            abort(400, description=f"File {filename} must be an image")
+        
+        blob = bucket.blob(f"incident_images/{filename}")  
+        blob.upload_from_file(file, content_type=file.mimetype)
+        blob.make_public()  
+        uploaded_urls.append(blob.public_url)
+
+    return uploaded_urls
+
+# def upload_images_to_firebase(files):
+#     uploaded_urls = []
+    
+#     if not files:
+#         return uploaded_urls  # Return empty list if no images provided
+
+#     bucket = storage.bucket()  # Ensure Firebase initialized properly
+    
+#     for file in files:
+#         if not hasattr(file, 'filename'):  # Ensure it's a file object
+#             continue
+
+#         filename = file.filename.lower()
+#         if not filename.endswith((".jpg", ".jpeg", ".png")):
+#             abort(400, description=f"File {filename} must be an image")
+        
+#         blob = bucket.blob(f"incident_images/{filename}")  
+#         blob.upload_from_file(file, content_type=file.mimetype)
+#         blob.make_public()  
+#         uploaded_urls.append(blob.public_url)  # Store Firebase URL
+        
+#     return uploaded_urls
+
+# def parse_report_timestamp(timestamp):
+#     try:
+#         if isinstance(timestamp, str):
+#             return datetime.fromisoformat(timestamp.replace("Z", "+00:00")).astimezone(ZoneInfo("Asia/Manila"))
+#         return timestamp.astimezone(ZoneInfo("Asia/Manila"))
+#     except Exception as e:
+#         abort(400, description=f"Invalid report_timestamp: {str(e)}")
+
 def parse_report_timestamp(timestamp):
     try:
+        manila_tz = pytz.timezone("Asia/Manila")
+
         if isinstance(timestamp, str):
-            return datetime.fromisoformat(timestamp.replace("Z", "+00:00")).astimezone(ZoneInfo("Asia/Manila"))
-        return timestamp.astimezone(ZoneInfo("Asia/Manila"))
+            timestamp = timestamp.strip() 
+            if "T" in timestamp:  
+                dt = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+            else:  
+                dt = datetime.strptime(timestamp, "%H:%M:%S")  
+        else:
+            dt = timestamp  
+
+        return dt.astimezone(manila_tz)
     except Exception as e:
         abort(400, description=f"Invalid report_timestamp: {str(e)}")
 
@@ -78,6 +142,53 @@ def get_incident_report_by_user_id_service(user_id, session):
     except Exception as e:
         return str(e)
 
+# def create_incident_report_service(data, session):
+#     try:
+#         user = session.query(User).filter_by(id=data['user_id']).first()
+#         if not user:
+#             abort(404, description="User not found") 
+
+#         report_timestamp = parse_report_timestamp(data['report_timestamp'])
+
+#         danger_zone = get_or_create_danger_zone(
+#             session, 
+#             data['latitude'], 
+#             data['longitude'], 
+#             data['radius'], 
+#             data['name'], 
+#             danger_zone_id=data.get('danger_zone_id')
+#         )
+
+#         current_time = datetime.now()
+#         incident_report = IncidentReport(
+#             user_id=data['user_id'],
+#             danger_zone_id=danger_zone.id,
+#             description=data['description'],
+#             report_date=data['report_date'],
+#             report_time=data['report_time'],
+#             images=data.get('images', []), 
+#             report_timestamp=report_timestamp,
+#             updated_at=current_time
+#         )
+
+#         session.add(incident_report)
+#         try:
+#             session.commit()
+#         except IntegrityError as e:
+#             session.rollback()
+#             abort(400, description=f"Error creating incident report: {str(e)}")  
+
+#         return {
+#             "message": "Incident report created successfully",
+#             "incident_report_id": incident_report.id,
+#             "is_verified": danger_zone.is_verified
+#         }, 200
+
+#     except Exception as e:
+#         session.rollback()
+#         abort(500, description=f"An error occurred: {str(e)}")  
+
+
 def create_incident_report_service(data, session):
     try:
         user = session.query(User).filter_by(id=data['user_id']).first()
@@ -86,6 +197,7 @@ def create_incident_report_service(data, session):
 
         report_timestamp = parse_report_timestamp(data['report_timestamp'])
 
+        # Find or create the danger zone
         danger_zone = get_or_create_danger_zone(
             session, 
             data['latitude'], 
@@ -95,6 +207,8 @@ def create_incident_report_service(data, session):
             danger_zone_id=data.get('danger_zone_id')
         )
 
+        uploaded_image_urls = upload_images_to_firebase(data.get('images', []))
+
         current_time = datetime.now()
         incident_report = IncidentReport(
             user_id=data['user_id'],
@@ -102,7 +216,7 @@ def create_incident_report_service(data, session):
             description=data['description'],
             report_date=data['report_date'],
             report_time=data['report_time'],
-            images=data.get('images', []), 
+            images=uploaded_image_urls, 
             report_timestamp=report_timestamp,
             updated_at=current_time
         )
@@ -117,6 +231,7 @@ def create_incident_report_service(data, session):
         return {
             "message": "Incident report created successfully",
             "incident_report_id": incident_report.id,
+            "uploaded_images": uploaded_image_urls,  # Return uploaded images
             "is_verified": danger_zone.is_verified
         }, 200
 

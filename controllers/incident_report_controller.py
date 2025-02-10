@@ -11,12 +11,30 @@ from services.incident_report_services import (
     update_incident_report_service,
     delete_incident_report_service,
     get_status_history_service,
+    upload_images_to_firebase
 )
 
 Session = sessionmaker(bind=engine)
 session = Session()
 
 incident_report_controller = Blueprint('incident_report_controller', __name__)
+
+@incident_report_controller.route('/upload', methods=['POST'])
+def upload():
+    try:
+        if 'images' not in request.files:
+            return jsonify({"error": "No images provided"}), 400
+
+        files = request.files.getlist('images')  # Get multiple image files
+        uploaded_urls = upload_images_to_firebase(files)  # Call the service function
+
+        return jsonify({
+            "message": "Images uploaded successfully",
+            "uploaded_urls": uploaded_urls
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @incident_report_controller.route('/incidents', methods=['GET']) 
 def get_incidents():
@@ -68,6 +86,37 @@ def create_incident():
         return jsonify(result), 200 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+#### testing in form data
+
+# @incident_report_controller.route('/incident', methods=['POST']) 
+# def create_incident():
+#     try:
+#         # Extract form data
+#         data = request.form.to_dict()
+
+#         # Convert numeric values properly
+#         data['user_id'] = int(data['user_id'])
+#         data['latitude'] = float(data['latitude'])
+#         data['longitude'] = float(data['longitude'])
+#         data['radius'] = float(data['radius'])
+
+#         # Handle images
+#         if 'images' in request.files:
+#             files = request.files.getlist('images')  # Get all uploaded images
+#             uploaded_image_urls = upload_images_to_firebase(files)  # Upload images
+#             data['images'] = uploaded_image_urls  # Store image URLs in `data`
+
+#         # Fix `report_timestamp` (combine date & time if needed)
+#         if 'report_date' in data and 'report_time' in data:
+#             data['report_timestamp'] = f"{data['report_date']}T{data['report_time']}:00Z"
+
+#         # Call the service function to process the report
+#         result = create_incident_report_service(data, session)
+#         return jsonify(result), 200  
+
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 500
 
 @incident_report_controller.route('/incident/<int:incident_id>', methods=['PUT'])
 def update_incident(incident_id):
