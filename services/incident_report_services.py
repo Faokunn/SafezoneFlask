@@ -1,4 +1,5 @@
 from models.dangerzone_model import DangerZone
+from models.incident_report_status_history import IncidentReportStatusHistory
 from models.incidentreport_model import IncidentReport
 from sqlalchemy.orm import sessionmaker
 from database.base import engine
@@ -13,6 +14,14 @@ import pytz
 Session = sessionmaker(bind=engine)
 
 
+def add_status_history(session, incident_report_id, status, remarks=None):
+    status_history = IncidentReportStatusHistory(
+        incident_report_id=incident_report_id,
+        status=status,
+        timestamp=datetime.now(),
+        remarks=remarks,
+    )
+    session.add(status_history)
 
 def upload_images_to_firebase(files):
     uploaded_urls = []
@@ -33,6 +42,7 @@ def upload_images_to_firebase(files):
         uploaded_urls.append(blob.public_url)
 
     return uploaded_urls
+
 
 # def upload_images_to_firebase(files):
 #     uploaded_urls = []
@@ -142,6 +152,57 @@ def get_incident_report_by_user_id_service(user_id, session):
     except Exception as e:
         return str(e)
 
+def create_incident_report_service(data, session):
+    try:
+        user = session.query(User).filter_by(id=data['user_id']).first()
+        if not user:
+            abort(404, description="User not found") 
+
+        report_timestamp = parse_report_timestamp(data['report_timestamp'])
+
+        danger_zone = get_or_create_danger_zone(
+            session, 
+            data['latitude'], 
+            data['longitude'], 
+            data['radius'], 
+            data['name'], 
+            danger_zone_id=data.get('danger_zone_id')
+        )
+
+        current_time = datetime.now()
+        incident_report = IncidentReport(
+            user_id=data['user_id'],
+            danger_zone_id=danger_zone.id,
+            description=data['description'],
+            report_date=data['report_date'],
+            report_time=data['report_time'],
+            images=data.get('images', []), 
+            report_timestamp=report_timestamp,
+            updated_at=current_time
+        )
+
+        session.add(incident_report)
+        session.flush()  
+
+        add_status_history(session, incident_report_id=incident_report.id, status="pending", remarks="Incident report pending.")
+
+        session.commit()
+
+        return {
+            "message": "Incident report created successfully",
+            "incident_report_id": incident_report.id,
+            "is_verified": danger_zone.is_verified
+        }, 200
+
+    except IntegrityError as e:
+        session.rollback()
+        abort(400, description=f"Error creating incident report: {str(e)}")  
+    except Exception as e:
+        session.rollback()
+        abort(500, description=f"An error occurred: {str(e)}")  
+
+
+
 # def create_incident_report_service(data, session):
 #     try:
 #         user = session.query(User).filter_by(id=data['user_id']).first()
@@ -150,6 +211,7 @@ def get_incident_report_by_user_id_service(user_id, session):
 
 #         report_timestamp = parse_report_timestamp(data['report_timestamp'])
 
+#         # Find or create the danger zone
 #         danger_zone = get_or_create_danger_zone(
 #             session, 
 #             data['latitude'], 
@@ -159,6 +221,8 @@ def get_incident_report_by_user_id_service(user_id, session):
 #             danger_zone_id=data.get('danger_zone_id')
 #         )
 
+#         uploaded_image_urls = upload_images_to_firebase(data.get('images', []))
+
 #         current_time = datetime.now()
 #         incident_report = IncidentReport(
 #             user_id=data['user_id'],
@@ -166,10 +230,12 @@ def get_incident_report_by_user_id_service(user_id, session):
 #             description=data['description'],
 #             report_date=data['report_date'],
 #             report_time=data['report_time'],
-#             images=data.get('images', []), 
+#             images=uploaded_image_urls, 
 #             report_timestamp=report_timestamp,
 #             updated_at=current_time
 #         )
+
+#         add_status_history(session, incident_report_id=incident_report.id, status="pending", remarks="Incident report pending.")
 
 #         session.add(incident_report)
 #         try:
@@ -181,63 +247,13 @@ def get_incident_report_by_user_id_service(user_id, session):
 #         return {
 #             "message": "Incident report created successfully",
 #             "incident_report_id": incident_report.id,
+#             "uploaded_images": uploaded_image_urls,  # Return uploaded images
 #             "is_verified": danger_zone.is_verified
 #         }, 200
 
 #     except Exception as e:
 #         session.rollback()
 #         abort(500, description=f"An error occurred: {str(e)}")  
-
-
-def create_incident_report_service(data, session):
-    try:
-        user = session.query(User).filter_by(id=data['user_id']).first()
-        if not user:
-            abort(404, description="User not found") 
-
-        report_timestamp = parse_report_timestamp(data['report_timestamp'])
-
-        # Find or create the danger zone
-        danger_zone = get_or_create_danger_zone(
-            session, 
-            data['latitude'], 
-            data['longitude'], 
-            data['radius'], 
-            data['name'], 
-            danger_zone_id=data.get('danger_zone_id')
-        )
-
-        uploaded_image_urls = upload_images_to_firebase(data.get('images', []))
-
-        current_time = datetime.now()
-        incident_report = IncidentReport(
-            user_id=data['user_id'],
-            danger_zone_id=danger_zone.id,
-            description=data['description'],
-            report_date=data['report_date'],
-            report_time=data['report_time'],
-            images=uploaded_image_urls, 
-            report_timestamp=report_timestamp,
-            updated_at=current_time
-        )
-
-        session.add(incident_report)
-        try:
-            session.commit()
-        except IntegrityError as e:
-            session.rollback()
-            abort(400, description=f"Error creating incident report: {str(e)}")  
-
-        return {
-            "message": "Incident report created successfully",
-            "incident_report_id": incident_report.id,
-            "uploaded_images": uploaded_image_urls,  # Return uploaded images
-            "is_verified": danger_zone.is_verified
-        }, 200
-
-    except Exception as e:
-        session.rollback()
-        abort(500, description=f"An error occurred: {str(e)}")  
 
     
 def update_incident_report_service(incident_id, data, session):
@@ -296,8 +312,17 @@ def delete_incident_report_service(incident_id, session):
         session.rollback()
         return str(e)
 
+
 def get_status_history_service(session, incident_id):
     try:
-        return []
+        status_history = (
+            session.query(IncidentReportStatusHistory)
+            .filter(IncidentReportStatusHistory.incident_report_id == incident_id)
+            .order_by(IncidentReportStatusHistory.timestamp.desc())  # Sort by latest first
+            .all()
+        )
+        
+        return [status.to_dict() for status in status_history]
+    
     except Exception as e:
-        return str(e)
+        return {"error": str(e)}

@@ -13,7 +13,7 @@ def add_status_history(session, safe_zone_id, status, remarks=None):
     status_history = SafeZoneStatusHistory(
         safe_zone_id=safe_zone_id,
         status=status,
-        timestamp=datetime.now(ZoneInfo("Asia/Manila")),
+        timestamp=datetime.now(),
         remarks=remarks,
     )
     session.add(status_history)
@@ -24,7 +24,6 @@ def update_safe_zone_status(safe_zone_id, session, status, remarks, is_verified=
         abort(404, description="Safe zone not found")
 
     safe_zone.status = status
-    
     if is_verified is not None:
         safe_zone.is_verified = is_verified
 

@@ -49,7 +49,7 @@ def get_incidents_by_user(user_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
-@safe_zone_controller.route('/incident/<int:safe_zone_id>/status_history', methods=['GET']) # TODO
+@safe_zone_controller.route('/<int:safe_zone_id>/status_history', methods=['GET']) # TODO
 def get_status_history(safe_zone_id):
     try:
         history = get_status_history_service(session, safe_zone_id)  

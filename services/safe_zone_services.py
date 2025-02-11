@@ -1,5 +1,6 @@
 from flask import jsonify, abort
 from sqlalchemy.orm import sessionmaker
+from models.safe_zone_status_history import SafeZoneStatusHistory
 from models.safezone_model import SafeZone
 from database.base import engine
 from models.user_model import User
@@ -8,6 +9,15 @@ from zoneinfo import ZoneInfo
 
 
 Session = sessionmaker(bind=engine)
+
+def add_status_history(session, safe_zone_id, status, remarks=None):
+    status_history = SafeZoneStatusHistory(
+        safe_zone_id=safe_zone_id,
+        status=status,
+        timestamp=datetime.now(),
+        remarks=remarks,
+    )
+    session.add(status_history)
 
 def parse_report_timestamp(timestamp):
     try:
@@ -55,11 +65,19 @@ def get_safe_zones_by_user_id_service(user_id, session):
     except Exception as e:
         return str(e)
 
-def get_status_history_service(session, incident_id):
+def get_status_history_service(session, safe_zone_id):
     try:
-        return []
+        status_history = (
+            session.query(SafeZoneStatusHistory)
+            .filter(SafeZoneStatusHistory.safe_zone_id == safe_zone_id)
+            .order_by(SafeZoneStatusHistory.timestamp.desc())  
+            .all()
+        )
+        
+        return [status.to_dict() for status in status_history]
+    
     except Exception as e:
-        return str(e)
+        return {"error": str(e)}
 
 ## CREATE
 
@@ -87,6 +105,10 @@ def create_safe_zone_service(data, session):
             report_timestamp=report_timestamp,
         )
         session.add(safe_zone)
+        session.flush()  
+
+        add_status_history(session, safe_zone_id=safe_zone.id, status="pending", remarks="Safe zone pending.")
+
         session.commit()
         session.refresh(safe_zone) 
         return safe_zone.to_dict()

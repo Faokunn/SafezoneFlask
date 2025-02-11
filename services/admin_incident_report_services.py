@@ -14,7 +14,7 @@ def add_status_history(session, incident_report_id, status, remarks=None):
     status_history = IncidentReportStatusHistory(
         incident_report_id=incident_report_id,
         status=status,
-        timestamp=datetime.now(ZoneInfo("Asia/Manila")),
+        timestamp=datetime.now(),
         remarks=remarks,
     )
     session.add(status_history)
@@ -26,7 +26,7 @@ def verify_incident_report_service(incident_id, session):
             abort(404, description="Incident report not found")
 
         incident_report.status = "verified"
-        incident_report.updated_at = datetime.now(ZoneInfo("Asia/Manila"))
+        incident_report.updated_at = datetime.now()
         session.add(incident_report)
 
         add_status_history(session, incident_report_id=incident_id, status="verified", remarks="Incident report verified.")
@@ -36,7 +36,7 @@ def verify_incident_report_service(incident_id, session):
             danger_zone = session.query(DangerZone).filter_by(id=incident_report.danger_zone_id).first()
             if danger_zone:
                 danger_zone.is_verified = True
-                danger_zone.updated_at = datetime.now(ZoneInfo("Asia/Manila"))
+                danger_zone.updated_at = datetime.now()
                 session.add(danger_zone)
 
                 danger_zone_data = {
@@ -71,7 +71,7 @@ def reject_incident_report_service(incident_id, session):
             abort(404, description="Incident report not found")
 
         incident_report.status = "rejected"
-        incident_report.updated_at = datetime.now(ZoneInfo("Asia/Manila"))
+        incident_report.updated_at = datetime.now()
         session.add(incident_report)
 
         add_status_history(session, incident_report_id=incident_id, status="rejected", remarks="Incident report rejected.")
@@ -101,7 +101,7 @@ def under_review_incident_report_service(incident_id, session):
             abort(404, description="Incident report not found")
 
         incident_report.status = "under review"
-        incident_report.updated_at = datetime.now(ZoneInfo("Asia/Manila"))
+        incident_report.updated_at = datetime.now()
         session.add(incident_report)
 
         add_status_history(session, incident_report_id=incident_id, status="under review", remarks="Incident report is under review.")
