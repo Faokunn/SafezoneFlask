@@ -1,4 +1,5 @@
 import os
+import json
 import psycopg2
 from dotenv import load_dotenv
 from flask import Flask
@@ -44,7 +45,8 @@ connection = psycopg2.connect(url)
 # Create tables in the database
 Base.metadata.create_all(bind=engine)
 
-cred = credentials.Certificate("./safezone-11724-firebase-adminsdk-h4m0x-ffeafe79ff.json")
+firebase_credentials = os.getenv("FIREBASE_CREDENTIALS")
+cred = credentials.Certificate(firebase_credentials)
 firebase_admin.initialize_app(cred, {'storageBucket': 'safezone-11724.firebasestorage.app'})
 
 
