@@ -3,6 +3,7 @@ from sqlalchemy.orm import sessionmaker
 from database.base import engine
 from services.safe_zone_services import (
     get_all_safe_zones_service,
+    get_all_verified_safe_zones_service,
     get_safe_zone_by_id_service,
     get_safe_zones_by_status_service,
     get_safe_zones_by_user_id_service,
@@ -23,6 +24,13 @@ safe_zone_controller = Blueprint('safe_zone_controller', __name__)
 def get_safe_zones():
     try:
         return get_all_safe_zones_service(session)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@safe_zone_controller.route("/verified-safe-zones", methods=["GET"])
+def get_verified_safe_zones():
+    try:
+        return get_all_verified_safe_zones_service(session)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

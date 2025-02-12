@@ -51,6 +51,17 @@ def get_all_safe_zones_service(session):
     except Exception as e:
         abort(500, description=f"Error retrieving safe zones: {str(e)}")
 
+def get_all_verified_safe_zones_service(session):
+    try:
+        safe_zones = session.query(SafeZone).filter_by(is_verified=True).all()
+
+        safe_zones_data = [safe_zone.to_dict() for safe_zone in safe_zones]
+
+        return jsonify(safe_zones_data), 200
+
+    except Exception as e:
+        abort(500, description=f"Error retrieving verified safe zones: {str(e)}")
+
 def get_safe_zones_by_status_service(status, session):
     try:
         safe_zones = session.query(SafeZone).filter_by(status=status).all()

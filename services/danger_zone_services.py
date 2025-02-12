@@ -26,3 +26,14 @@ def get_all_danger_zones_service(session):
 
     except Exception as e:
         abort(500, description=f"Error retrieving danger zones: {str(e)}")
+
+def get_all_verified_danger_zones_service(session):
+    try:
+        danger_zones = session.query(DangerZone).filter_by(is_verified=True).all()
+
+        danger_zones_data = [danger_zone.to_dict() for danger_zone in danger_zones]
+
+        return jsonify(danger_zones_data), 200
+
+    except Exception as e:
+        abort(500, description=f"Error retrieving danger zones: {str(e)}")
