@@ -45,7 +45,7 @@ connection = psycopg2.connect(url)
 # Create tables in the database
 Base.metadata.create_all(bind=engine)
 
-firebase_credentials = os.getenv("FIREBASE_CREDENTIALS")
+firebase_credentials = json.loads(os.getenv("FIREBASE_CREDENTIALS"))
 cred = credentials.Certificate(firebase_credentials)
 firebase_admin.initialize_app(cred, {'storageBucket': 'safezone-11724.firebasestorage.app'})
 
