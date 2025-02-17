@@ -9,6 +9,7 @@ class Circle(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
+    code = Column(String(5), nullable=True)
     is_active = Column(Boolean, default=True)
 
     # Many-to-many relationship with User via GroupMember
