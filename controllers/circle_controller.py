@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from sqlalchemy.orm import sessionmaker
 from models.circle_model import Circle
+from models.profile_model import Profile
 from models.user_model import User
 from models.groupmembers_model import GroupMember
 from database.base import engine
@@ -157,6 +158,26 @@ def view_user_circles():
     if not circles:
         return jsonify({"message": "User is not a member of any circle"}), 200
 
-    circles_data = [{"circle_id": circle.id, "circle_name": circle.name} for circle in circles]
+    # Fetch profile data for each user in the circle
+    circles_data = []
+    for circle in circles:
+        members = session.query(User).join(GroupMember).filter(GroupMember.circle_id == circle.id).all()
+
+        member_profiles = []
+        for member in members:
+            profile = session.query(Profile).filter_by(user_id=member.id).first()
+            member_profiles.append({
+                "user_id": member.id,
+                "first_name": profile.first_name if profile else "",
+                "last_name": profile.last_name if profile else "",
+                "status": profile.status if profile else "Safe"
+            })
+
+        circles_data.append({
+            "circle_id": circle.id,
+            "circle_name": circle.name,
+            "members": member_profiles
+        })
 
     return jsonify({"user_id": user_id, "circles": circles_data}), 200
+
