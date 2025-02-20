@@ -16,6 +16,8 @@ session = Session()
 user_controller = Blueprint('user_controller', __name__)
 
 def format_user_data(user_obj, profile_obj):
+    if not profile_obj:
+        profile_obj = {}  # Empty dictionary if profile is missing
     return {
         "user": {
             "id": user_obj.id,
@@ -23,14 +25,15 @@ def format_user_data(user_obj, profile_obj):
             "email": user_obj.email,
         },
         "profile": {
-            "address": profile_obj.address,
-            "first_name": profile_obj.first_name.upper(),
-            "last_name": profile_obj.last_name.upper(),
-            "is_admin": profile_obj.is_admin,
-            "is_girl": profile_obj.is_girl,
-            "is_verified": profile_obj.is_verified,
+            "address": profile_obj.get("address", "Address not available"),
+            "first_name": profile_obj.get("first_name", "").upper(),
+            "last_name": profile_obj.get("last_name", "").upper(),
+            "is_admin": profile_obj.get("is_admin", False),
+            "is_girl": profile_obj.get("is_girl", True),
+            "is_verified": profile_obj.get("is_verified", False),
         }
     }
+
 
 # Emergency contacts for Dagupan City
 emergency_contacts = [
