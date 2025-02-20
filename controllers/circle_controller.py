@@ -134,7 +134,7 @@ def view_members():
     if not members:
         return jsonify({"message": "No members in this circle"}), 200
 
-    members_data = [{"user_id": member.id, "username": member.username, "email": member.email} for member in members]
+    members_data = [{"user_id": member.id} for member in members]
 
     return jsonify({"circle_id": circle_id, "members": members_data}), 200
 
