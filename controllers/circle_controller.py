@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from sqlalchemy.orm import sessionmaker
 from models.circle_model import Circle
+from models.profile_model import Profile
 from models.user_model import User
 from models.groupmembers_model import GroupMember
 from database.base import engine
