@@ -168,6 +168,6 @@ def view_user_circles():
     if not circles:
         return jsonify({"message": "User is not a member of any circle"}), 200
 
-    circles_data = [{"circle_id": circle.id, "circle_name": circle.name} for circle in circles]
+    circles_data = [{"circle_id": circle.id, "circle_name": circle.name, "code": circle.code, "time": circle.code_expiry} for circle in circles]
 
     return jsonify({"user_id": user_id, "circles": circles_data}), 200
