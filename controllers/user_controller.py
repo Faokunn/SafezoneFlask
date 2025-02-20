@@ -80,7 +80,8 @@ def create_account():
             user_id=new_user.id,  # Link the profile to the user
             is_admin=is_admin,
             is_girl=is_girl,
-            is_verified=is_verified
+            is_verified=is_verified,
+            status="Safe"
         )
         session.add(profile)
         session.commit()
@@ -130,6 +131,7 @@ def login():
                 "is_admin": profile_obj.is_admin,
                 "is_girl": profile_obj.is_girl,
                 "is_verified": profile_obj.is_verified,
+                "status": profile_obj.status,
             }
         }), 200
 
