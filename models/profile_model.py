@@ -14,5 +14,6 @@ class Profile(Base):
     is_girl = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)
     last_name = Column(String(80), nullable=False)
+    status = Column(String, default="Safe")
 
     user = relationship("User", back_populates="profile")

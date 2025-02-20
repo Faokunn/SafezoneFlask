@@ -19,6 +19,7 @@ def format_profile_data(profile_obj):
             "is_admin": profile_obj.is_admin,
             "is_girl": profile_obj.is_girl,
             "is_verified": profile_obj.is_verified,
+            "status": profile_obj.status
         }
     }
 
