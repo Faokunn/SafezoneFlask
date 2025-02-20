@@ -127,15 +127,14 @@ def login():
                 "username": user_obj.username,
                 "email": user_obj.email,
             },
-            "profile": {
-                "address": profile_obj.address,
-                "first_name": profile_obj.first_name.upper(),
-                "last_name": profile_obj.last_name.upper(),
-                "is_admin": profile_obj.is_admin,
-                "is_girl": profile_obj.is_girl,
-                "is_verified": profile_obj.is_verified,
-                "status": profile_obj.status,
-            }
+"profile": {
+            "address": profile_obj.get("address", "Address not available"),
+            "first_name": profile_obj.get("first_name", "").upper(),
+            "last_name": profile_obj.get("last_name", "").upper(),
+            "is_admin": profile_obj.get("is_admin", False),
+            "is_girl": profile_obj.get("is_girl", True),
+            "is_verified": profile_obj.get("is_verified", False),
+        }
         }), 200
 
     return jsonify({"error": "Invalid credentials"}), 401
