@@ -2,7 +2,6 @@ from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
 from database.base import Base
 
-
 class User(Base):
     __tablename__ = 'users'
 
@@ -11,7 +10,7 @@ class User(Base):
     email = Column(String(120), unique=True, nullable=False)
     password = Column(String(128), nullable=False)
 
-    # Other relationships
+    # One-to-Many Relationships
     notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
     contacts = relationship("ContactModel", back_populates="user", cascade="all, delete-orphan")
     sos_alerts = relationship("SOSAlerter", back_populates="user", cascade="all, delete-orphan")
@@ -19,8 +18,6 @@ class User(Base):
     incident_reports = relationship("IncidentReport", back_populates="user", cascade="all, delete-orphan")
     safe_zones = relationship("SafeZone", back_populates="user", cascade="all, delete-orphan")
 
-    # Many-to-many relationship with Circle through GroupMember
-    group_memberships = relationship("GroupMember", back_populates="user", cascade="all, delete-orphan")
-
-    # Indirectly get all circles the user is part of
-    circles = relationship("Circle", secondary="group_members", back_populates="members")
+    # Many-to-Many Relationship via GroupMember
+    group_memberships = relationship("GroupMember", back_populates="user", cascade="all, delete-orphan", overlaps="circles")
+    circles = relationship("Circle", secondary="group_members", back_populates="members", overlaps="group_memberships")
