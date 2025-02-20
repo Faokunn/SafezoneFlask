@@ -31,6 +31,7 @@ from controllers.admin_incident_report_controller import admin_incident_report_c
 from controllers.admin_safe_zone_controller import admin_safe_zone_controller
 from controllers.danger_zone_controller import danger_zone_controller
 from controllers.safe_zone_controller import safe_zone_controller
+from controllers.profile_controller import profile_controller
 
 
 load_dotenv()
@@ -59,6 +60,7 @@ app.register_blueprint(admin_incident_report_controller, url_prefix='/admin/inci
 app.register_blueprint(admin_safe_zone_controller, url_prefix='/admin/safe-zone')
 app.register_blueprint(danger_zone_controller, url_prefix='/danger-zone')
 app.register_blueprint(safe_zone_controller, url_prefix='/safe-zone')
+app.register_blueprint(profile_controller, url_prefix='/profile')
 
 
 @app.route('/')

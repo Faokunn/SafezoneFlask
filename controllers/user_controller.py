@@ -16,6 +16,8 @@ session = Session()
 user_controller = Blueprint('user_controller', __name__)
 
 def format_user_data(user_obj, profile_obj):
+    if not profile_obj:
+        profile_obj = {}  # Empty dictionary if profile is missing
     return {
         "user": {
             "id": user_obj.id,
@@ -23,14 +25,16 @@ def format_user_data(user_obj, profile_obj):
             "email": user_obj.email,
         },
         "profile": {
-            "address": profile_obj.address,
-            "first_name": profile_obj.first_name.upper(),
-            "last_name": profile_obj.last_name.upper(),
-            "is_admin": profile_obj.is_admin,
-            "is_girl": profile_obj.is_girl,
-            "is_verified": profile_obj.is_verified,
+            "address": profile_obj.get("address", "Address not available"),
+            "first_name": profile_obj.get("first_name", "").upper(),
+            "last_name": profile_obj.get("last_name", "").upper(),
+            "is_admin": profile_obj.get("is_admin", False),
+            "is_girl": profile_obj.get("is_girl", True),
+            "is_verified": profile_obj.get("is_verified", False),
+            "status": profile_obj.get("status", "Safe"),
         }
     }
+
 
 # Emergency contacts for Dagupan City
 emergency_contacts = [
@@ -61,7 +65,8 @@ def create_account():
     # Get optional profile values with defaults if not provided
     is_admin = data.get('is_admin', False)  # Default to False
     is_girl = data.get('is_girl', True)     # Default to True
-    is_verified = data.get('is_verified', False)  # Default to False
+    is_verified = data.get('is_verified', False)
+    status = data.get('status', "Safe")  # Default to False
 
     if not username or not email or not password or not address or not first_name or not last_name:
         return jsonify({"error": "Missing required fields"}), 400
@@ -80,7 +85,8 @@ def create_account():
             user_id=new_user.id,  # Link the profile to the user
             is_admin=is_admin,
             is_girl=is_girl,
-            is_verified=is_verified
+            is_verified=is_verified,
+            status=status,
         )
         session.add(profile)
         session.commit()
@@ -123,14 +129,15 @@ def login():
                 "username": user_obj.username,
                 "email": user_obj.email,
             },
-            "profile": {
-                "address": profile_obj.address,
-                "first_name": profile_obj.first_name.upper(),
-                "last_name": profile_obj.last_name.upper(),
-                "is_admin": profile_obj.is_admin,
-                "is_girl": profile_obj.is_girl,
-                "is_verified": profile_obj.is_verified,
-            }
+"profile": {
+        "address": profile_obj.address if profile_obj.address else "Address not available",
+        "first_name": profile_obj.first_name.upper() if profile_obj.first_name else "",
+        "last_name": profile_obj.last_name.upper() if profile_obj.last_name else "",
+        "is_admin": profile_obj.is_admin if profile_obj.is_admin is not None else False,
+        "is_girl": profile_obj.is_girl if profile_obj.is_girl is not None else True,
+        "is_verified": profile_obj.is_verified if profile_obj.is_verified is not None else False,
+        "status": profile_obj.status if profile_obj.status else "Safe"
+        }
         }), 200
 
     return jsonify({"error": "Invalid credentials"}), 401
