@@ -31,6 +31,7 @@ def format_user_data(user_obj, profile_obj):
             "is_admin": profile_obj.get("is_admin", False),
             "is_girl": profile_obj.get("is_girl", True),
             "is_verified": profile_obj.get("is_verified", False),
+            "status": profile_obj.get("status", "Safe"),
         }
     }
 
@@ -65,7 +66,7 @@ def create_account():
     is_admin = data.get('is_admin', False)  # Default to False
     is_girl = data.get('is_girl', True)     # Default to True
     is_verified = data.get('is_verified', False)
-    status = data.get('status')  # Default to False
+    status = data.get('status', "Safe")  # Default to False
 
     if not username or not email or not password or not address or not first_name or not last_name:
         return jsonify({"error": "Missing required fields"}), 400
