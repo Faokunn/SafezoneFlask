@@ -61,29 +61,6 @@ app.register_blueprint(danger_zone_controller, url_prefix='/danger-zone')
 app.register_blueprint(safe_zone_controller, url_prefix='/safe-zone')
 
 
-# app.config['SWAGGER'] = {
-#     'title': 'Flask Incident Reports API',
-#     'uiversion': 3,
-#     'definitions': {
-#         'IncidentReport': {
-#             'type': 'object',
-#             'properties': {
-#                 'id': {'type': 'integer'},
-#                 'danger_zone_id': {'type': 'integer'},
-#                 'user_id': {'type': 'integer'},
-#                 'description': {'type': 'string'},
-#                 'report_date': {'type': 'string', 'format': 'date'},
-#                 'report_time': {'type': 'string', 'format': 'time'},
-#                 'images': {'type': 'array', 'items': {'type': 'string'}},
-#                 'status': {'type': 'string'},
-#                 'report_timestamp': {'type': 'string', 'format': 'date-time'},
-#                 'updated_at': {'type': 'string', 'format': 'date-time'},
-#             }
-#         }
-#     }
-# }
-
-
 @app.route('/')
 def home():
     return 'Welcome to the Flask API!'
