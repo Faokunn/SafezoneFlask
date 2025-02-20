@@ -130,13 +130,13 @@ def login():
                 "email": user_obj.email,
             },
 "profile": {
-            "address": profile_obj.get("address", "Address not available"),
-            "first_name": profile_obj.get("first_name", "").upper(),
-            "last_name": profile_obj.get("last_name", "").upper(),
-            "is_admin": profile_obj.get("is_admin", False),
-            "is_girl": profile_obj.get("is_girl", True),
-            "is_verified": profile_obj.get("is_verified", False),
-            "status": profile_obj.get("status")
+        "address": profile_obj.address if profile_obj.address else "Address not available",
+        "first_name": profile_obj.first_name.upper() if profile_obj.first_name else "",
+        "last_name": profile_obj.last_name.upper() if profile_obj.last_name else "",
+        "is_admin": profile_obj.is_admin if profile_obj.is_admin is not None else False,
+        "is_girl": profile_obj.is_girl if profile_obj.is_girl is not None else True,
+        "is_verified": profile_obj.is_verified if profile_obj.is_verified is not None else False,
+        "status": profile_obj.status if profile_obj.status else "Safe"
         }
         }), 200
 
