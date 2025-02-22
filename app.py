@@ -7,14 +7,13 @@ from database.base import Base, engine
 from flasgger import Swagger
 from flask_cors import CORS
 import firebase_admin
-from firebase_admin import credentials, storage
+from firebase_admin import credentials, storage, firestore
 
 
 from models.user_model import User
 from models.sosalerts_model import SOSAlerter
 from models.safezone_model import SafeZone
 from models.safe_zone_status_history import SafeZoneStatusHistory
-from models.profile_model import Profile
 from models.notifications import Notification
 from models.incidentreport_model import IncidentReport
 from models.incident_report_status_history import IncidentReportStatusHistory 
@@ -22,6 +21,7 @@ from models.dangerzone_model import DangerZone
 from models.contacts_model import ContactModel 
 from models.circle_model import Circle
 from models.groupmembers_model import GroupMember
+from models.profile_model import Profile
 
 from controllers.user_controller import user_controller
 from controllers.contacts_controller import contact_controller 
@@ -45,11 +45,6 @@ connection = psycopg2.connect(url)
 
 # Create tables in the database
 Base.metadata.create_all(bind=engine)
-
-firebase_credentials = json.loads(os.getenv("FIREBASE_CREDENTIALS"))
-cred = credentials.Certificate(firebase_credentials)
-firebase_admin.initialize_app(cred, {'storageBucket': 'safezone-11724.firebasestorage.app'})
-
 
 # Register the blueprints
 app.register_blueprint(user_controller, url_prefix='/user')
