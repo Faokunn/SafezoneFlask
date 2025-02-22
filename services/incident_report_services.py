@@ -249,9 +249,9 @@ def create_incident_report_service(data, session):
         return {
             "message": "Incident report created successfully",
             "incident_report_id": incident_report.id,
-            "uploaded_images": uploaded_image_urls,  # Return uploaded images
+            "uploaded_images": uploaded_image_urls,  
             "is_verified": danger_zone.is_verified
-        }, 200
+        }
 
     except Exception as e:
         session.rollback()
