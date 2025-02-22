@@ -143,7 +143,9 @@ def view_members():
             "user_id": member.id,
             "first_name": profile.first_name if profile else "",
             "last_name": profile.last_name if profile else "",
-            "status": profile.status if profile else "Safe"
+            "status": profile.status if profile else "Safe",
+            "latitude": profile.latitude if profile else 0.0,
+            "longitude": profile.longitude if profile else 0.0,
         })
 
     return jsonify({"circle_id": circle_id, "members": members_data}), 200
@@ -171,3 +173,26 @@ def view_user_circles():
     circles_data = [{"circle_id": circle.id, "circle_name": circle.name, "code": circle.code, "time": circle.code_expiry} for circle in circles]
 
     return jsonify({"user_id": user_id, "circles": circles_data}), 200
+
+# Change circle is_active status
+@circle_controller.route('/update_active_status', methods=['PATCH'])
+def update_active_status():
+    data = request.get_json()
+    circle_id = data.get('circle_id')
+    is_active = data.get('is_active')
+
+    if circle_id is None or is_active is None:
+        return jsonify({"error": "Circle ID and is_active status are required"}), 400
+
+    circle = session.query(Circle).filter_by(id=circle_id).first()
+
+    if not circle:
+        return jsonify({"error": "Circle not found"}), 404
+
+    try:
+        circle.is_active = bool(is_active)
+        session.commit()
+        return jsonify({"message": "Circle status updated successfully", "circle_id": circle.id, "is_active": circle.is_active}), 200
+    except Exception as e:
+        session.rollback()
+        return jsonify({"error": str(e)}), 500
