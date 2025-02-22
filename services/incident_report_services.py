@@ -234,10 +234,12 @@ def create_incident_report_service(data, session):
             report_timestamp=report_timestamp,
             updated_at=current_time
         )
+        session.add(incident_report)
+        session.flush()
 
         add_status_history(session, incident_report_id=incident_report.id, status="pending", remarks="Incident report pending.")
 
-        session.add(incident_report)
+        
         try:
             session.commit()
         except IntegrityError as e:
