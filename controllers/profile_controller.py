@@ -67,7 +67,7 @@ def update_location():
         session.commit()
 
         # Update Firebase Firestore for real-time tracking
-        db.collection("locations").document(str(user_id)).set({
+        db.collection("locations").document(str(user_id)).set({ 
             "latitude": latitude,
             "longitude": longitude,
             "timestamp": firestore.SERVER_TIMESTAMP

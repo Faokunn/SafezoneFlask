@@ -119,6 +119,7 @@ def login():
 
     user_obj = session.query(User).filter_by(email=email).first()
 
+
     if user_obj and user_obj.password == password:  # Compare plain-text passwords
         profile_obj = session.query(Profile).filter_by(user_id=user_obj.id).first()
         
