@@ -1,21 +1,16 @@
-import firebase_admin
-from firebase_admin import credentials, firestore
+import json
+from app import firebase_admin
+from firebase_admin import firestore
 from flask import Blueprint, request, jsonify
 from database.base import SessionLocal
 from models.profile_model import Profile
 from dotenv import load_dotenv
+from sqlalchemy.orm import sessionmaker
 import os
+from database.base import db
 
 # Load environment variables from .env file
 load_dotenv()
-
-# Get Firebase credentials path from environment variable
-firebase_credentials_path = os.getenv("FIREBASE_CREDENTIALS")
-
-# Initialize Firebase
-cred = credentials.Certificate(firebase_credentials_path)  # Use the path from .env file
-firebase_admin.initialize_app(cred)
-db = firestore.client()
 
 profile_controller = Blueprint('profile_controller', __name__)
 

@@ -14,8 +14,8 @@ class Profile(Base):
     is_girl = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)
     status = Column(String, default="Safe")
-    latitude = Column(Float, nullable=False)
-    longitude = Column(Float, nullable=False)
-
+    latitude = Column(Float, nullable=False, default=0.0)
+    longitude = Column(Float, nullable=False, default=0.0)
+    circle = Column(Integer, nullable=True)
 
     user = relationship("User", back_populates="profile")
