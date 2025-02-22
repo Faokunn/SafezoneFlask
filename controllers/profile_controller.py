@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from sqlalchemy.orm import sessionmaker
 import os
 from database.base import db
+from flask_cors import cross_origin
 
 # Load environment variables from .env file
 load_dotenv()
@@ -44,6 +45,7 @@ def get_profile(user_id):
 
 # Update User Location
 @profile_controller.route('/update-location', methods=['POST'])
+@cross_origin()
 def update_location():
     data = request.json
     user_id = data.get("user_id")
