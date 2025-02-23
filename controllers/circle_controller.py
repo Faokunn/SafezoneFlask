@@ -190,9 +190,34 @@ def update_active_status():
         return jsonify({"error": "Circle not found"}), 404
 
     try:
+        if is_active:  
+            # Find all users in the target circle
+            user_ids = session.query(GroupMember.user_id).filter_by(circle_id=circle_id).all()
+            user_ids = [user_id[0] for user_id in user_ids]
+
+            if user_ids:
+                # Deactivate all other active circles for these users
+                session.query(Circle).filter(
+                    Circle.id != circle_id,  # Exclude the current one
+                    Circle.is_active == True,
+                    Circle.id.in_(
+                        session.query(GroupMember.circle_id)
+                        .filter(GroupMember.user_id.in_(user_ids))
+                    )
+                ).update({"is_active": False}, synchronize_session=False)
+
+        # Update the target circle
         circle.is_active = bool(is_active)
         session.commit()
-        return jsonify({"message": "Circle status updated successfully", "circle_id": circle.id, "is_active": circle.is_active}), 200
+
+        return jsonify({
+            "message": "Circle status updated successfully",
+            "circle_id": circle.id,
+            "is_active": circle.is_active
+        }), 200
+
     except Exception as e:
         session.rollback()
         return jsonify({"error": str(e)}), 500
+
+
