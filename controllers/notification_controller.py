@@ -1,0 +1,160 @@
+import json
+from app import firebase_admin
+from firebase_admin import firestore
+from flask import Blueprint, request, jsonify
+from database.base import SessionLocal
+from models.groupmembers_model import GroupMember
+from models.notifications import Notification
+from dotenv import load_dotenv
+from sqlalchemy.orm import sessionmaker
+import os
+from database.base import db
+from flask_cors import cross_origin
+from sqlalchemy import Column, Integer, String, Boolean, Float, ForeignKey, Text, DateTime
+from sqlalchemy.orm import relationship
+from datetime import datetime
+from database.base import Base
+
+# Load environment variables from .env file
+load_dotenv()
+
+notification_controller = Blueprint('notification_controller', __name__)
+class Notification(Base):
+    __tablename__ = 'notifications'
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    title = Column(String(80), nullable=False)
+    message = Column(Text, nullable=False)
+    is_read = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.now())
+    updated_at = Column(DateTime, default=datetime.now(), onupdate=datetime.now())
+    type = Column(String(80), nullable=False)
+
+    user = relationship("User", back_populates="notifications")
+
+# Create Notification
+@notification_controller.route('/notifications', methods=['POST'])
+@cross_origin()
+def create_notification():
+    data = request.json
+    user_id = data.get("user_id")
+    title = data.get("title")
+    message = data.get("message")
+    type = data.get("type")
+
+    if not all([user_id, title, message, type]):
+        return jsonify({"error": "Missing required fields"}), 400
+
+    session = SessionLocal()
+    try:
+        new_notification = Notification(user_id=user_id, title=title, message=message, type=type)
+        session.add(new_notification)
+        session.commit()
+        return jsonify({"message": "Notification created successfully!"}), 201
+    except Exception as e:
+        session.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+# Get Notifications for a User
+@notification_controller.route('/notifications/<int:user_id>', methods=['GET'])
+@cross_origin()
+def get_notifications(user_id):
+    session = SessionLocal()
+    try:
+        notifications = session.query(Notification).filter_by(user_id=user_id).all()
+        return jsonify([{
+            "id": n.id,
+            "title": n.title,
+            "message": n.message,
+            "is_read": n.is_read,
+            "created_at": n.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+            "type": n.type
+        } for n in notifications]), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+# Mark Notification as Read
+@notification_controller.route('/notifications/<int:notification_id>', methods=['PATCH'])
+@cross_origin()
+def mark_notification_as_read(notification_id):
+    session = SessionLocal()
+    try:
+        notification = session.query(Notification).filter_by(id=notification_id).first()
+        if not notification:
+            return jsonify({"error": "Notification not found"}), 404
+
+        notification.is_read = True
+        session.commit()
+        return jsonify({"message": "Notification marked as read"}), 200
+    except Exception as e:
+        session.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+# Delete Notification
+@notification_controller.route('/notifications/<int:notification_id>', methods=['DELETE'])
+@cross_origin()
+def delete_notification(notification_id):
+    session = SessionLocal()
+    try:
+        notification = session.query(Notification).filter_by(id=notification_id).first()
+        if not notification:
+            return jsonify({"error": "Notification not found"}), 404
+
+        session.delete(notification)
+        session.commit()
+        return jsonify({"message": "Notification deleted successfully"}), 200
+    except Exception as e:
+        session.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+        
+@notification_controller.route('/notifications/broadcast', methods=['POST'])
+@cross_origin()
+def send_notification_to_circle_members():
+    data = request.json
+    user_id = data.get("user_id")
+    title = data.get("title")
+    message = data.get("message")
+    type = data.get("type")
+
+    if not all([user_id, title, message, type]):
+        return jsonify({"error": "Missing required fields"}), 400
+
+    session = SessionLocal()
+    try:
+        # Get all circles where the user is a member
+        user_circles = session.query(GroupMember.circle_id).filter_by(user_id=user_id).all()
+        circle_ids = [circle.circle_id for circle in user_circles]
+
+        if not circle_ids:
+            return jsonify({"error": "User is not in any circles"}), 404
+
+        # Get all group members in those circles
+        group_members = session.query(GroupMember.user_id).filter(GroupMember.circle_id.in_(circle_ids)).distinct().all()
+        member_ids = [member.user_id for member in group_members if member.user_id != user_id]  # Exclude the sender
+
+        if not member_ids:
+            return jsonify({"error": "No members found in user's circles"}), 404
+
+        # Create notifications for all members
+        notifications = [
+            Notification(user_id=member_id, title=title, message=message, type=type)
+            for member_id in member_ids
+        ]
+        session.bulk_save_objects(notifications)
+        session.commit()
+
+        return jsonify({"message": f"Notification sent to {len(member_ids)} group members"}), 201
+
+    except Exception as e:
+        session.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()

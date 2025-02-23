@@ -79,3 +79,31 @@ def update_location():
         return jsonify({"error": str(e)}), 500
     finally:
         session.close()
+
+# Update User Status
+@profile_controller.route('/update-status', methods=['PATCH'])
+@cross_origin()
+def update_status():
+    data = request.json
+    user_id = data.get("user_id")
+    status = data.get("status")
+
+    if user_id is None or status is None:
+        return jsonify({"error": "Missing required fields"}), 400
+
+    session = SessionLocal()
+    try:
+        profile_obj = session.query(Profile).filter_by(user_id=user_id).first()
+        if not profile_obj:
+            return jsonify({"error": "Profile not found"}), 404
+
+        # Update the status field
+        profile_obj.status = status
+        session.commit()
+
+        return jsonify({"message": "Status updated!", "status": status}), 200
+    except Exception as e:
+        session.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
