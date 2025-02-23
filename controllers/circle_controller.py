@@ -206,9 +206,15 @@ def update_active_status():
                     )
                 ).update({"is_active": False}, synchronize_session=False)
 
+                                # Now update the profiles of all users in the current circle
+                session.query(Profile).filter(Profile.user_id.in_(user_ids)).update(
+                    {"circle": circle_id}, synchronize_session=False
+                )
+
         # Update the target circle
         circle.is_active = bool(is_active)
         session.commit()
+        
 
         return jsonify({
             "message": "Circle status updated successfully",
