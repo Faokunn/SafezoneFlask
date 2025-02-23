@@ -139,7 +139,7 @@ def login():
         "is_girl": profile_obj.is_girl if profile_obj.is_girl is not None else True,
         "is_verified": profile_obj.is_verified if profile_obj.is_verified is not None else False,
         "status": profile_obj.status if profile_obj.status else "Safe",
-        "active_circle": profile_obj.circle
+        "active_circle": profile_obj.circle if profile_obj.circle else 0
         }
         }), 200
 
