@@ -19,6 +19,7 @@ from database.base import Base
 load_dotenv()
 
 notification_controller = Blueprint('notification_controller', __name__)
+
 class Notification(Base):
     __tablename__ = 'notifications'
     id = Column(Integer, primary_key=True)
@@ -72,6 +73,19 @@ def get_notifications(user_id):
             "created_at": n.created_at.strftime("%Y-%m-%d %H:%M:%S"),
             "type": n.type
         } for n in notifications]), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+# Get Unread Notifications Count
+@notification_controller.route('/notifications/unread-count/<int:user_id>', methods=['GET'])
+@cross_origin()
+def get_unread_notifications_count(user_id):
+    session = SessionLocal()
+    try:
+        unread_count = session.query(Notification).filter_by(user_id=user_id, is_read=False).count()
+        return jsonify({"unread_count": unread_count}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     finally:
@@ -155,6 +169,47 @@ def send_notification_to_circle_members():
 
     except Exception as e:
         session.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+@notification_controller.route('/notifications/unread/<int:user_id>', methods=['GET'])
+@cross_origin()
+def get_new_unread_notifications(user_id):
+    last_checked = request.args.get("last_checked")  # Expected in "YYYY-MM-DD HH:MM:SS" format
+    
+    session = SessionLocal()
+    try:
+        query = session.query(Notification).filter_by(user_id=user_id, is_read=False)
+
+        # Fetch only notifications created after last_checked
+        if last_checked:
+            try:
+                last_checked_time = datetime.strptime(last_checked, "%Y-%m-%d %H:%M:%S")
+                query = query.filter(Notification.created_at > last_checked_time)
+            except ValueError:
+                return jsonify({"error": "Invalid timestamp format"}), 400
+
+        unread_notifications = query.all()
+
+        # Get the latest timestamp for future polling
+        latest_timestamp = max(
+            (n.created_at for n in unread_notifications),
+            default=datetime.now()  # If no new notifications, return current time
+        ).strftime("%Y-%m-%d %H:%M:%S")
+
+        return jsonify({
+            "unread_count": len(unread_notifications),
+            "notifications": [{
+                "id": n.id,
+                "title": n.title,
+                "message": n.message,
+                "created_at": n.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                "type": n.type
+            } for n in unread_notifications],
+            "last_checked": latest_timestamp  # Client should use this in the next request
+        }), 200
+    except Exception as e:
         return jsonify({"error": str(e)}), 500
     finally:
         session.close()
