@@ -27,8 +27,14 @@ def view_group_members():
     if not is_member:
         return jsonify({"error": "User is not a member of this circle"}), 403
 
-    # Get all users who are members of the circle
-    members = session.query(Profile).join(GroupMember).filter(GroupMember.circle_id == circle_id).all()
+    # Get all users who are members of the circle using an explicit join condition
+    members = (
+        session.query(Profile)
+        .select_from(GroupMember)
+        .join(Profile, Profile.id == GroupMember.user_id)  # Explicit join condition
+        .filter(GroupMember.circle_id == circle_id)
+        .all()
+    )
 
     if not members:
         return jsonify({"message": "No members in this circle"}), 200
