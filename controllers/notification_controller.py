@@ -20,19 +20,6 @@ load_dotenv()
 
 notification_controller = Blueprint('notification_controller', __name__)
 
-class Notification(Base):
-    __tablename__ = 'notifications'
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-    title = Column(String(80), nullable=False)
-    message = Column(Text, nullable=False)
-    is_read = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.now())
-    updated_at = Column(DateTime, default=datetime.now(), onupdate=datetime.now())
-    type = Column(String(80), nullable=False)
-
-    user = relationship("User", back_populates="notifications")
-
 # Create Notification
 @notification_controller.route('/notifications', methods=['POST'])
 @cross_origin()
