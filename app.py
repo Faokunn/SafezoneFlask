@@ -59,7 +59,7 @@ app.register_blueprint(danger_zone_controller, url_prefix='/danger-zone')
 app.register_blueprint(safe_zone_controller, url_prefix='/safe-zone')
 app.register_blueprint(profile_controller, url_prefix='/profile')
 app.register_blueprint(groupmember_controller, url_prefix='/groupmember')
-app.register_blueprint(notification_controller, url_prefix='/notification')
+app.register_blueprint(notification_controller, url_prefix='/notifications')
 
 
 @app.route('/')
