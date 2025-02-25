@@ -21,7 +21,7 @@ load_dotenv()
 notification_controller = Blueprint('notification_controller', __name__)
 
 # Create Notification
-@notification_controller.route('/notifications', methods=['POST'])
+@notification_controller.route('/create_notif', methods=['POST'])
 @cross_origin()
 def create_notification():
     data = request.json
@@ -46,7 +46,7 @@ def create_notification():
         session.close()
 
 # Get Notifications for a User
-@notification_controller.route('/notifications/<int:user_id>', methods=['GET'])
+@notification_controller.route('/get_notif/<int:user_id>', methods=['GET'])
 @cross_origin()
 def get_notifications(user_id):
     session = SessionLocal()
@@ -66,7 +66,7 @@ def get_notifications(user_id):
         session.close()
 
 # Get Unread Notifications Count
-@notification_controller.route('/notifications/unread-count/<int:user_id>', methods=['GET'])
+@notification_controller.route('/unread-count/<int:user_id>', methods=['GET'])
 @cross_origin()
 def get_unread_notifications_count(user_id):
     session = SessionLocal()
@@ -79,7 +79,7 @@ def get_unread_notifications_count(user_id):
         session.close()
 
 # Mark Notification as Read
-@notification_controller.route('/notifications/<int:notification_id>', methods=['PATCH'])
+@notification_controller.route('/mark_notif/<int:notification_id>', methods=['PATCH'])
 @cross_origin()
 def mark_notification_as_read(notification_id):
     session = SessionLocal()
@@ -98,7 +98,7 @@ def mark_notification_as_read(notification_id):
         session.close()
 
 # Delete Notification
-@notification_controller.route('/notifications/<int:notification_id>', methods=['DELETE'])
+@notification_controller.route('/delete_notif/<int:notification_id>', methods=['DELETE'])
 @cross_origin()
 def delete_notification(notification_id):
     session = SessionLocal()
@@ -116,7 +116,7 @@ def delete_notification(notification_id):
     finally:
         session.close()
         
-@notification_controller.route('/notifications/broadcast', methods=['POST'])
+@notification_controller.route('/broadcast', methods=['POST'])
 @cross_origin()
 def send_notification_to_circle_members():
     data = request.json
@@ -160,7 +160,7 @@ def send_notification_to_circle_members():
     finally:
         session.close()
 
-@notification_controller.route('/notifications/unread/<int:user_id>', methods=['GET'])
+@notification_controller.route('/unread/<int:user_id>', methods=['GET'])
 @cross_origin()
 def get_new_unread_notifications(user_id):
     last_checked = request.args.get("last_checked")  # Expected in "YYYY-MM-DD HH:MM:SS" format
