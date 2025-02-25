@@ -163,7 +163,7 @@ def send_notification_to_circle_members():
 @notification_controller.route('/unread/<int:user_id>', methods=['GET'])
 @cross_origin()
 def get_new_unread_notifications(user_id):
-    last_checked = request.args.get("last_checked")  # Expected in "YYYY-MM-DD HH:MM:SS" format
+    last_checked = request.args.get("last_checked")  # Expected in "YYYY-MM-DDTHH:MM:SS" format
     
     session = SessionLocal()
     try:
@@ -172,7 +172,8 @@ def get_new_unread_notifications(user_id):
         # Fetch only notifications created after last_checked
         if last_checked:
             try:
-                last_checked_time = datetime.strptime(last_checked, "%Y-%m-%d %H:%M:%S")
+                # Handle ISO 8601 format with microseconds
+                last_checked_time = datetime.fromisoformat(last_checked)  # Accepts "YYYY-MM-DDTHH:MM:SS" with optional microseconds
                 query = query.filter(Notification.created_at > last_checked_time)
             except ValueError:
                 return jsonify({"error": "Invalid timestamp format"}), 400
@@ -197,6 +198,8 @@ def get_new_unread_notifications(user_id):
             "last_checked": latest_timestamp  # Client should use this in the next request
         }), 200
     except Exception as e:
+        # Log error details for debugging
+        print(f"Error occurred: {e}")
         return jsonify({"error": str(e)}), 500
     finally:
         session.close()
