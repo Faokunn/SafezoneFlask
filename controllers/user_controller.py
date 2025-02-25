@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from sqlalchemy.exc import IntegrityError
+from models.groupmembers_model import GroupMember
 from models.user_model import User
 from models.profile_model import Profile
 from models.contacts_model import ContactModel  # Import the ContactModel
@@ -112,7 +113,7 @@ def create_account():
 @user_controller.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    email = data.get('email')  # Using email instead of username
+    email = data.get('email')
     password = data.get('password')
 
     if not email or not password:
@@ -120,31 +121,32 @@ def login():
 
     user_obj = session.query(User).filter_by(email=email).first()
 
-
-    if user_obj and user_obj.password == password:  # Compare plain-text passwords
+    if user_obj and user_obj.password == password:
         profile_obj = session.query(Profile).filter_by(user_id=user_obj.id).first()
         
-        # Return user and profile data
+        # Get the active circle from the GroupMember table
+        active_group_member = session.query(GroupMember).filter_by(user_id=user_obj.id, is_active=True).first()
+        active_circle_id = active_group_member.circle_id if active_group_member else None
+
         return jsonify({
             "user": {
                 "id": user_obj.id,
                 "username": user_obj.username,
                 "email": user_obj.email,
             },
-"profile": {
-        "address": profile_obj.address if profile_obj.address else "Address not available",
-        "first_name": profile_obj.first_name.upper() if profile_obj.first_name else "",
-        "last_name": profile_obj.last_name.upper() if profile_obj.last_name else "",
-        "is_admin": profile_obj.is_admin if profile_obj.is_admin is not None else False,
-        "is_girl": profile_obj.is_girl if profile_obj.is_girl is not None else True,
-        "is_verified": profile_obj.is_verified if profile_obj.is_verified is not None else False,
-        "status": profile_obj.status if profile_obj.status else "Safe",
-        "active_circle": profile_obj.circle if profile_obj.circle else 0
-        }
+            "profile": {
+                "address": profile_obj.address if profile_obj.address else "Address not available",
+                "first_name": profile_obj.first_name.upper() if profile_obj.first_name else "",
+                "last_name": profile_obj.last_name.upper() if profile_obj.last_name else "",
+                "is_admin": profile_obj.is_admin if profile_obj.is_admin is not None else False,
+                "is_girl": profile_obj.is_girl if profile_obj.is_girl is not None else True,
+                "is_verified": profile_obj.is_verified if profile_obj.is_verified is not None else False,
+                "status": profile_obj.status if profile_obj.status else "Safe",
+                "active_circle": active_circle_id  # Now fetched from GroupMember model
+            }
         }), 200
 
     return jsonify({"error": "Invalid credentials"}), 401
-
 
 
 # Get All Users Route - NO TOKEN REQUIRED

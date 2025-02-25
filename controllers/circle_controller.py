@@ -78,23 +78,30 @@ def join_circle():
     code = data.get('code')
 
     if not user_id or not code:
-        return jsonify({"error": "User ID and Code are required"}), 400
+        return jsonify({"error": "User ID and circle code are required"}), 400
 
-    circle = session.query(Circle).filter_by(code=code).first()
-    
-    if not circle or (circle.code_expiry and circle.code_expiry < datetime.datetime.utcnow()):
-        return jsonify({"error": "Invalid or expired code"}), 400
+    try:
+        # Ensure code is a string before querying
+        circle = session.query(Circle).filter(Circle.code == str(code)).first()
+        
+        if not circle:
+            return jsonify({"error": "Invalid circle code"}), 404
 
-    existing_member = session.query(GroupMember).filter_by(user_id=user_id, circle_id=circle.id).first()
-    if existing_member:
-        return jsonify({"message": "User is already a member of this circle"}), 400
+        # Check if user already in circle
+        existing_member = session.query(GroupMember).filter_by(user_id=user_id, circle_id=circle.id).first()
+        if existing_member:
+            return jsonify({"message": "User already in this circle"}), 200
 
-    group_member = GroupMember(user_id=user_id, circle_id=circle.id)
-    session.add(group_member)
-    session.commit()
+        # Add user to the circle
+        new_member = GroupMember(user_id=user_id, circle_id=circle.id)
+        session.add(new_member)
+        session.commit()
 
-    return jsonify({"message": "User joined the circle successfully"}), 200
+        return jsonify({"message": "User successfully joined the circle"}), 200
 
+    except Exception as e:
+        session.rollback()
+        return jsonify({"error": str(e)}), 500
 # Remove a user from a circle
 @circle_controller.route('/remove_member', methods=['POST'])
 def remove_member():
@@ -154,23 +161,34 @@ def view_members():
 # View all circles of a user
 @circle_controller.route('/view_user_circles', methods=['GET'])
 def view_user_circles():
-    user_id = request.args.get('user_id')
+    user_id = request.args.get('user_id')  # Get user_id
 
     if not user_id:
         return jsonify({"error": "User ID is required"}), 400
 
-    user = session.query(User).filter_by(id=user_id).first()
-
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-
-    # Get all circles the user is a member of
-    circles = session.query(Circle).join(GroupMember).filter(GroupMember.user_id == user_id).all()
+    # Get all circles where the user is a member
+    circles = (
+        session.query(Circle)
+        .join(GroupMember, Circle.id == GroupMember.circle_id)
+        .filter(GroupMember.user_id == user_id)
+        .all()
+    )
 
     if not circles:
-        return jsonify({"message": "User is not a member of any circle"}), 200
+        return jsonify({"message": "No circles found for this user"}), 200
 
-    circles_data = [{"circle_id": circle.id, "circle_name": circle.name, "code": circle.code, "time": circle.code_expiry, "status": circle.is_active} for circle in circles]
+    circles_data = []
+    for circle in circles:
+        # Get is_active status from GroupMember table
+        group_member = session.query(GroupMember).filter_by(user_id=user_id, circle_id=circle.id).first()
+        is_active = group_member.is_active if group_member else False
+
+        circles_data.append({
+            "circle_id": circle.id,
+            "circle_name": circle.name,
+            "code": circle.code,
+            "status": is_active
+        })
 
     return jsonify({"user_id": user_id, "circles": circles_data}), 200
 
@@ -178,48 +196,39 @@ def view_user_circles():
 @circle_controller.route('/update_active_status', methods=['PATCH'])
 def update_active_status():
     data = request.get_json()
-    circle_id = data.get('circle_id')
-    is_active = data.get('is_active')
+    user_id = data.get('user_id')  # User whose active circle is being changed
+    circle_id = data.get('circle_id')  # The circle to activate
+    is_active = data.get('is_active')  # True or False
 
-    if circle_id is None or is_active is None:
-        return jsonify({"error": "Circle ID and is_active status are required"}), 400
+    if not user_id or not circle_id or is_active is None:
+        return jsonify({"error": "User ID, Circle ID, and is_active status are required"}), 400
 
-    circle = session.query(Circle).filter_by(id=circle_id).first()
+    group_member = session.query(GroupMember).filter_by(user_id=user_id, circle_id=circle_id).first()
 
-    if not circle:
-        return jsonify({"error": "Circle not found"}), 404
+    if not group_member:
+        return jsonify({"error": "User is not a member of this circle"}), 404
 
     try:
-        if is_active:  
-            # Find all users in the target circle
-            user_ids = session.query(GroupMember.user_id).filter_by(circle_id=circle_id).all()
-            user_ids = [user_id[0] for user_id in user_ids]
+        if is_active:
+            # Deactivate all other circles for this user
+            session.query(GroupMember).filter(
+                GroupMember.user_id == user_id,  # Only for this user
+                GroupMember.circle_id != circle_id,  # Exclude the target circle
+                GroupMember.is_active == True  # Only update currently active circles
+            ).update({"is_active": False}, synchronize_session=False)
 
-            if user_ids:
-                # Deactivate all other active circles for these users
-                session.query(Circle).filter(
-                    Circle.id != circle_id,  # Exclude the current one
-                    Circle.is_active == True,
-                    Circle.id.in_(
-                        session.query(GroupMember.circle_id)
-                        .filter(GroupMember.user_id.in_(user_ids))
-                    )
-                ).update({"is_active": False}, synchronize_session=False)
+            # Commit the change before updating the target circle
+            session.commit()
 
-                                # Now update the profiles of all users in the current circle
-                session.query(Profile).filter(Profile.user_id.in_(user_ids)).update(
-                    {"circle": circle_id}, synchronize_session=False
-                )
-
-        # Update the target circle
-        circle.is_active = bool(is_active)
+        # Set the target circle's active status
+        group_member.is_active = bool(is_active)
         session.commit()
-        
 
         return jsonify({
-            "message": "Circle status updated successfully",
-            "circle_id": circle.id,
-            "is_active": circle.is_active
+            "message": "User's active circle updated successfully",
+            "user_id": user_id,
+            "active_circle_id": circle_id if is_active else None,
+            "is_active": group_member.is_active
         }), 200
 
     except Exception as e:
