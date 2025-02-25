@@ -13,5 +13,6 @@ class Notification(Base):
     created_at = Column(DateTime, default=datetime.now())
     updated_at = Column(DateTime, default=datetime.now(), onupdate=datetime.now())
     type = Column(String(80), nullable=False)
+    is_done = Column(Boolean, default=False)
 
     user = relationship("User", back_populates="notifications") 

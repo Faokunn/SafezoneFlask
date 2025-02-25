@@ -29,13 +29,20 @@ def create_notification():
     title = data.get("title")
     message = data.get("message")
     type = data.get("type")
+    is_done = data.get("is_done", False)  # Default to False if not provided
 
     if not all([user_id, title, message, type]):
         return jsonify({"error": "Missing required fields"}), 400
 
     session = SessionLocal()
     try:
-        new_notification = Notification(user_id=user_id, title=title, message=message, type=type)
+        new_notification = Notification(
+            user_id=user_id, 
+            title=title, 
+            message=message, 
+            type=type, 
+            is_done=is_done  # Add is_done field
+        )
         session.add(new_notification)
         session.commit()
         return jsonify({"message": "Notification created successfully!"}), 201
@@ -44,6 +51,7 @@ def create_notification():
         return jsonify({"error": str(e)}), 500
     finally:
         session.close()
+
 
 # Get Notifications for a User
 @notification_controller.route('/get_notif/<int:user_id>', methods=['GET'])
@@ -57,6 +65,7 @@ def get_notifications(user_id):
             "title": n.title,
             "message": n.message,
             "is_read": n.is_read,
+            "is_done": n.is_done,  # Include is_done
             "created_at": n.created_at.strftime("%Y-%m-%d %H:%M:%S"),
             "type": n.type
         } for n in notifications]), 200
@@ -64,6 +73,7 @@ def get_notifications(user_id):
         return jsonify({"error": str(e)}), 500
     finally:
         session.close()
+
 
 # Get Unread Notifications Count
 @notification_controller.route('/unread-count/<int:user_id>', methods=['GET'])
@@ -79,7 +89,7 @@ def get_unread_notifications_count(user_id):
         session.close()
 
 # Mark Notification as Read
-@notification_controller.route('/mark_notif/<int:notification_id>', methods=['PATCH'])
+@notification_controller.route('/mark_read/<int:notification_id>', methods=['PATCH'])
 @cross_origin()
 def mark_notification_as_read(notification_id):
     session = SessionLocal()
@@ -88,7 +98,7 @@ def mark_notification_as_read(notification_id):
         if not notification:
             return jsonify({"error": "Notification not found"}), 404
 
-        notification.is_read = True
+        notification.is_read = True  # Mark the notification as done
         session.commit()
         return jsonify({"message": "Notification marked as read"}), 200
     except Exception as e:
@@ -96,6 +106,7 @@ def mark_notification_as_read(notification_id):
         return jsonify({"error": str(e)}), 500
     finally:
         session.close()
+
 
 # Delete Notification
 @notification_controller.route('/delete_notif/<int:notification_id>', methods=['DELETE'])
@@ -124,6 +135,7 @@ def send_notification_to_circle_members():
     title = data.get("title")
     message = data.get("message")
     type = data.get("type")
+    is_done = data.get("is_done", False)  # Default to False if not provided
 
     if not all([user_id, title, message, type]):
         return jsonify({"error": "Missing required fields"}), 400
@@ -146,7 +158,7 @@ def send_notification_to_circle_members():
 
         # Create notifications for all members
         notifications = [
-            Notification(user_id=member_id, title=title, message=message, type=type)
+            Notification(user_id=member_id, title=title, message=message, type=type, is_done=is_done)
             for member_id in member_ids
         ]
         session.bulk_save_objects(notifications)
@@ -159,6 +171,7 @@ def send_notification_to_circle_members():
         return jsonify({"error": str(e)}), 500
     finally:
         session.close()
+
 
 @notification_controller.route('/unread/<int:user_id>', methods=['GET'])
 @cross_origin()
@@ -200,6 +213,24 @@ def get_new_unread_notifications(user_id):
     except Exception as e:
         # Log error details for debugging
         print(f"Error occurred: {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+#Mark As Done
+@notification_controller.route('/mark_done/<int:notification_id>', methods=['PATCH'])
+@cross_origin()
+def mark_notification_as_done(notification_id):
+    session = SessionLocal()
+    try:
+        notification = session.query(Notification).filter_by(id=notification_id).first()
+        if not notification:
+            return jsonify({"error": "Notification not found"}), 404
+
+        notification.is_done = True
+        session.commit()
+        return jsonify({"message": "Notification marked as done"}), 200
+    except Exception as e:
+        session.rollback()
         return jsonify({"error": str(e)}), 500
     finally:
         session.close()
