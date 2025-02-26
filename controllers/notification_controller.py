@@ -15,6 +15,8 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 from database.base import Base
 
+
+
 # Load environment variables from .env file
 load_dotenv()
 

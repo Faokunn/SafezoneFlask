@@ -10,6 +10,7 @@ import os
 from database.base import db
 from flask_cors import cross_origin
 
+
 # Load environment variables from .env file
 load_dotenv()
 
