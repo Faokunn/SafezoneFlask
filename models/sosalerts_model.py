@@ -13,3 +13,13 @@ class SOSAlerter(Base):
     status = Column(String(80), nullable=False)
 
     user = relationship("User", back_populates="sos_alerts")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "alert_time": self.alert_time.isoformat() if self.alert_time else None,
+            "latitude": self.latitude,
+            "longitude": self.longitude,
+            "status": self.status
+        }

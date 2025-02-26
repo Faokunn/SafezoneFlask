@@ -11,3 +11,11 @@ class ContactModel(Base):
     name = Column(String(255), nullable=False)
 
     user = relationship("User", back_populates="contacts")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "phone_number": self.phone_number,
+            "name": self.name
+        }

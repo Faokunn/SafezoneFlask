@@ -19,3 +19,19 @@ class Profile(Base):
     circle = Column(Integer, nullable=True)
 
     user = relationship("User", back_populates="profile")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "first_name": self.first_name,
+            "last_name": self.last_name,
+            "address": self.address,
+            "is_admin": self.is_admin,
+            "is_girl": self.is_girl,
+            "is_verified": self.is_verified,
+            "status": self.status,
+            "latitude": self.latitude,
+            "longitude": self.longitude,
+            "circle": self.circle
+        }

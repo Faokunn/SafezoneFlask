@@ -12,6 +12,8 @@ session = Session()
 
 admin_safe_zone_controller = Blueprint('admin_safe_zone_controller', __name__)
 
+## ADMIN VERIFICATION OF SAFEZONES
+
 @admin_safe_zone_controller.route("/verify-safezone/<int:safezone_id>", methods=["PUT"])
 def verify_safe_zone(safezone_id):
     try:
@@ -33,3 +35,4 @@ def review_safe_zone(safezone_id):
         return under_review_safe_zone_service(safezone_id, session)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    

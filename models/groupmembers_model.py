@@ -13,3 +13,11 @@ class GroupMember(Base):
     # Relationships
     user = relationship("User", back_populates="group_memberships")
     circle = relationship("Circle", back_populates="group_members")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "circle_id": self.circle_id,
+            "is_active": self.is_active
+        }

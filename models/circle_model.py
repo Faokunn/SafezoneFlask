@@ -13,3 +13,12 @@ class Circle(Base):
     # Many-to-Many Relationship via GroupMember
     group_members = relationship("GroupMember", back_populates="circle", cascade="all, delete-orphan", overlaps="members")
     members = relationship("User", secondary="group_members", back_populates="circles", overlaps="group_members")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "code": self.code,
+            "code_expiry": self.code_expiry.isoformat() if self.code_expiry else None,
+            "group_members": [member.to_dict() for member in self.group_members] if self.group_members else []
+        }

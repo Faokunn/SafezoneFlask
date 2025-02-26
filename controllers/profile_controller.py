@@ -1,5 +1,5 @@
 import json
-from app import firebase_admin
+from database.base import firebase_admin
 from firebase_admin import firestore
 from flask import Blueprint, request, jsonify
 from database.base import SessionLocal
