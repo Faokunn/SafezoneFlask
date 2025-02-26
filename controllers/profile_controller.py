@@ -1,4 +1,5 @@
 import json
+import os
 from database.base import firebase_admin
 from firebase_admin import firestore
 from flask import Blueprint, request, jsonify
@@ -6,10 +7,9 @@ from database.base import SessionLocal
 from models.profile_model import Profile
 from dotenv import load_dotenv
 from sqlalchemy.orm import sessionmaker
-import os
 from database.base import db
 from flask_cors import cross_origin
-
+from google.cloud import storage
 
 # Load environment variables from .env file
 load_dotenv()
@@ -28,7 +28,8 @@ def format_profile_data(profile_obj):
             "is_verified": profile_obj.is_verified,
             "status": profile_obj.status,
             "latitude": profile_obj.latitude,
-            "longitude": profile_obj.longitude
+            "longitude": profile_obj.longitude,
+            "profile_picture": profile_obj.profile_picture
         }
     }
 
@@ -106,5 +107,83 @@ def update_status():
     except Exception as e:
         session.rollback()
         return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+# Upload Profile Picture to Firebase Storage
+def upload_profile_picture(user_id, file_path):
+    """Uploads a profile picture to Firebase Storage and returns the URL."""
+    bucket_name = os.getenv("FIREBASE_STORAGE_BUCKET")  # 🔹 Load bucket name from .env
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+    
+    # 🔹 Define the file path in Firebase Storage (e.g., "profile_pictures/user_id.jpg")
+    blob = bucket.blob(f"profile_pictures/{user_id}.jpg")
+
+    # 🔹 Upload the image
+    blob.upload_from_filename(file_path)
+
+    # 🔹 Make the image publicly accessible
+    blob.make_public()
+    download_url = blob.public_url
+
+    print(f"Profile picture uploaded: {download_url}")
+    return download_url  # 🔹 Return the image URL
+
+# Save Profile Picture in Database
+def update_profile_picture_in_db(user_id, profile_picture_url):
+    """Updates the user's profile picture URL in the database."""
+    session = SessionLocal()
+    try:
+        profile_obj = session.query(Profile).filter_by(user_id=user_id).first()
+        if not profile_obj:
+            return False, "Profile not found"
+
+        # 🔹 Update the profile picture URL in the database
+        profile_obj.profile_picture = profile_picture_url
+        session.commit()
+        return True, "Profile picture updated successfully"
+    except Exception as e:
+        session.rollback()
+        return False, str(e)
+    finally:
+        session.close()
+
+# Upload Profile Picture API
+@profile_controller.route('/upload-profile-picture', methods=['POST'])
+@cross_origin()
+def upload_profile_picture_api():
+    """API to handle profile picture uploads."""
+    user_id = request.form.get("user_id")
+    file = request.files.get("file")
+
+    if not user_id or not file:
+        return jsonify({"error": "Missing user_id or file"}), 400
+
+    # Save file temporarily
+    file_path = f"/tmp/{user_id}.jpg"
+    file.save(file_path)
+
+    # Upload to Firebase Storage
+    profile_picture_url = upload_profile_picture(user_id, file_path)
+
+    # Update the database with the profile picture URL
+    success, message = update_profile_picture_in_db(user_id, profile_picture_url)
+
+    if success:
+        return jsonify({"message": message, "profile_picture_url": profile_picture_url}), 200
+    else:
+        return jsonify({"error": message}), 500
+
+# Get Profile Picture API
+@profile_controller.route('/get-profile-picture/<int:user_id>', methods=['GET'])
+def get_profile_picture(user_id):
+    """API to fetch the user's profile picture URL."""
+    session = SessionLocal()
+    try:
+        profile_obj = session.query(Profile).filter_by(user_id=user_id).first()
+        if not profile_obj or not profile_obj.profile_picture:
+            return jsonify({"error": "Profile picture not found"}), 404
+        return jsonify({"profile_picture_url": profile_obj.profile_picture}), 200
     finally:
         session.close()
