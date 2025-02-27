@@ -91,7 +91,7 @@ def get_unread_notifications_count(user_id):
         session.close()
 
 # Mark Notification as Read
-@notification_controller.route('/mark_read/<int:notification_id>', methods=['PATCH'])
+@notification_controller.route('/mark_notif/<int:notification_id>', methods=['PATCH'])
 @cross_origin()
 def mark_notification_as_read(notification_id):
     session = SessionLocal()
