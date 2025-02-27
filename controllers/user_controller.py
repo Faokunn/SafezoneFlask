@@ -106,7 +106,10 @@ def create_account():
             session.add(new_contact)
         session.commit()
 
-        return jsonify({"message": "User, profile, and emergency contacts created successfully"}), 201
+        return jsonify({
+            "message": "User, profile, and emergency contacts created successfully",
+            "user_id": new_user.id
+        }), 201
     except IntegrityError:
         session.rollback()
         return jsonify({"error": "Username or email already exists"}), 400
