@@ -34,7 +34,9 @@ def format_user_data(user_obj, profile_obj):
             "is_verified": profile_obj.get("is_verified", False),
             "status": profile_obj.get("status", "Safe"),
             "active_circle": profile_obj.get("circle"),
-            "profile_picture": profile_obj.get("profile_picture_url")
+            "profile_picture": profile_obj.get("profile_picture_url"),
+            "phone_number": profile_obj.get("phone_number", "01234567890"),
+
         }
     }
 
@@ -144,7 +146,8 @@ def login():
                 "is_verified": profile_obj.is_verified if profile_obj.is_verified is not None else False,
                 "status": profile_obj.status if profile_obj.status else "Safe",
                 "active_circle": active_circle_id,
-                "profile_picture": profile_obj.profile_picture_url
+                "profile_picture": profile_obj.profile_picture_url,
+                "phone_number": profile_obj.phone_number if profile_obj.phone_number else "01234567890",
             }
         }), 200
 

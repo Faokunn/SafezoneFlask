@@ -17,7 +17,8 @@ class Profile(Base):
     latitude = Column(Float, nullable=False, default=0.0)
     longitude = Column(Float, nullable=False, default=0.0)
     circle = Column(Integer, nullable=True)
-    profile_picture_url = Column(String, nullable=True)  
+    profile_picture_url = Column(String, nullable=True)
+    phone_number = Column(String, nullable=True)
     user = relationship("User", back_populates="profile")
 
     def to_dict(self):
@@ -34,5 +35,6 @@ class Profile(Base):
             "latitude": self.latitude,
             "longitude": self.longitude,
             "profile_picture_url": self.profile_picture_url,
-            "circle": self.circle
+            "circle": self.circle,
+            "phone_number": self.phone_number
         }
