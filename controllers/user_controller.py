@@ -169,3 +169,22 @@ def get_all_users():
         user_list.append(user_data)
     
     return jsonify(user_list), 200
+
+@user_controller.route('/change_password', methods=['PATCH'])
+def change_password():
+    data = request.get_json()
+    password = data.get('password')
+    newpassword = data.get('newpassword')
+    user_id = data.get('user_id')
+
+    if not password or not newpassword:
+        return jsonify({"error": "Missing password or new password"}), 400
+    
+    user_obj = session.query(User).filter_by(id=user_id).first()
+    if user_obj and user_obj.password == password:
+        user_obj.password = newpassword
+        session.commit()
+        return jsonify({"message": "Password updated successfully"}), 200
+    
+    return jsonify({"error": "Invalid credentials"}), 401
+
