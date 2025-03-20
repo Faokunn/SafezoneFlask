@@ -78,10 +78,40 @@ def get_incidents_by_user(user_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# @incident_report_controller.route('/incident', methods=['POST']) 
+# def create_incident():
+#     try:
+#         data = request.get_json()  
+#         result = create_incident_report_service(data, session) 
+#         return jsonify(result), 200 
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 500
+
 @incident_report_controller.route('/incident', methods=['POST']) 
 def create_incident():
     try:
-        data = request.get_json()  
+        if request.content_type and 'multipart/form-data' in request.content_type:
+            data = {
+                'user_id': int(request.form.get('user_id')),
+                'description': request.form.get('description'),
+                'report_date': request.form.get('report_date'),
+                'report_time': request.form.get('report_time'),
+                'report_timestamp': request.form.get('report_timestamp'),
+                'latitude': float(request.form.get('latitude')),
+                'longitude': float(request.form.get('longitude')),
+                'radius': float(request.form.get('radius')),
+                'name': request.form.get('name')
+            }
+            danger_zone_id = request.form.get('danger_zone_id')
+            if danger_zone_id:
+                data['danger_zone_id'] = int(danger_zone_id)
+                
+            images = request.files.getlist('images')
+            data['images'] = images
+        else:
+            data = request.get_json()
+            data['images'] = []  
+            
         result = create_incident_report_service(data, session) 
         return jsonify(result), 200 
     except Exception as e:
