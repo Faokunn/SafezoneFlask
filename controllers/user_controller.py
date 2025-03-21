@@ -168,7 +168,7 @@ def get_all_users():
         user_data = format_user_data(user_obj, profile_obj)
         user_list.append(user_data)
 
-        
+
     return jsonify(user_list), 200
 
 @user_controller.route('/change_password', methods=['PATCH'])
@@ -190,7 +190,7 @@ def change_password():
     return jsonify({"error": "Invalid credentials"}), 401
 
 @user_controller.route('/reset_password', methods=['PATCH'])
-def change_password():
+def reset_password():
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
