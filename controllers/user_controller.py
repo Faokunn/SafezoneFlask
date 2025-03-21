@@ -200,9 +200,13 @@ def change_password():
 
     user_obj = session.query(User).filter_by(email=email).first()
 
-    if user_obj and user_obj.password == password:
-        user_obj.password = newpassword
-        session.commit()
-        return jsonify({"message": "Password updated successfully"}), 200
+    if not user_obj:
+        return jsonify({"error": "User not found"}), 404  
 
-    return jsonify({"error": "Invalid credentials"}), 401
+    if user_obj.password != password:
+        return jsonify({"error": "Current password is incorrect"}), 401 
+
+    user_obj.password = newpassword
+    session.commit()
+    return jsonify({"message": "Password updated successfully"}), 200
+
