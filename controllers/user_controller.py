@@ -188,3 +188,21 @@ def change_password():
     
     return jsonify({"error": "Invalid credentials"}), 401
 
+@user_controller.route('/reset_password', methods=['PATCH'])
+def change_password():
+    data = request.get_json()
+    email = data.get('email')
+    password = data.get('password')
+    newpassword = data.get('newpassword')
+
+    if not email or not password or not newpassword:
+        return jsonify({"error": "Missing email, password, or new password"}), 400
+
+    user_obj = session.query(User).filter_by(email=email).first()
+
+    if user_obj and user_obj.password == password:
+        user_obj.password = newpassword
+        session.commit()
+        return jsonify({"message": "Password updated successfully"}), 200
+
+    return jsonify({"error": "Invalid credentials"}), 401
