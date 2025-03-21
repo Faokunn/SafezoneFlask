@@ -167,7 +167,8 @@ def get_all_users():
         profile_obj = session.query(Profile).filter_by(user_id=user_obj.id).first()
         user_data = format_user_data(user_obj, profile_obj)
         user_list.append(user_data)
-    
+
+        
     return jsonify(user_list), 200
 
 @user_controller.route('/change_password', methods=['PATCH'])
