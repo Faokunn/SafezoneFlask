@@ -211,3 +211,18 @@ def reset_password():
     session.commit()
     return jsonify({"message": "Password updated successfully"}), 200
 
+@user_controller.route('/check_email', methods=['POST'])
+def check_email():
+    data = request.get_json()
+    email = data.get('email')
+
+    if not email:
+        return jsonify({"error": "Email is required"}), 400
+
+    user_obj = session.query(User).filter_by(email=email).first()
+
+    if user_obj:
+        return jsonify({"message": "Email exists"}), 200
+
+    return jsonify({"error": "Email not found"}), 404
+
