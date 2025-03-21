@@ -61,13 +61,13 @@ def create_notification():
 def get_notifications(user_id):
     session = SessionLocal()
     try:
-        notifications = session.query(Notification).filter_by(user_id=user_id).all()
+        notifications = session.query(Notification).filter_by(user_id=user_id).order_by(Notification.created_at.desc()).all()
         return jsonify([{
             "id": n.id,
             "title": n.title,
             "message": n.message,
             "is_read": n.is_read,
-            "is_done": n.is_done,  # Include is_done
+            "is_done": n.is_done,
             "created_at": n.created_at.strftime("%Y-%m-%d %H:%M:%S"),
             "type": n.type
         } for n in notifications]), 200
@@ -77,37 +77,49 @@ def get_notifications(user_id):
         session.close()
 
 
+
 # Get Unread Notifications Count
-@notification_controller.route('/unread-count/<int:user_id>', methods=['GET'])
+@notification_controller.route('/unread/<int:user_id>', methods=['GET'])
 @cross_origin()
-def get_unread_notifications_count(user_id):
+def get_new_unread_notifications(user_id):
+    last_checked = request.args.get("last_checked")  # Expected in "YYYY-MM-DDTHH:MM:SS" format
+    
     session = SessionLocal()
     try:
-        unread_count = session.query(Notification).filter_by(user_id=user_id, is_read=False).count()
-        return jsonify({"unread_count": unread_count}), 200
+        query = session.query(Notification).filter_by(user_id=user_id, is_read=False)
+
+        if last_checked:
+            try:
+                last_checked_time = datetime.fromisoformat(last_checked)
+                query = query.filter(Notification.created_at > last_checked_time)
+            except ValueError:
+                return jsonify({"error": "Invalid timestamp format"}), 400
+
+        # Sort by newest first
+        unread_notifications = query.order_by(Notification.created_at.desc()).all()
+
+        latest_timestamp = max(
+            (n.created_at for n in unread_notifications),
+            default=datetime.now()
+        ).strftime("%Y-%m-%d %H:%M:%S")
+
+        return jsonify({
+            "unread_count": len(unread_notifications),
+            "notifications": [{
+                "id": n.id,
+                "title": n.title,
+                "message": n.message,
+                "created_at": n.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                "type": n.type
+            } for n in unread_notifications],
+            "last_checked": latest_timestamp
+        }), 200
     except Exception as e:
+        print(f"Error occurred: {e}")
         return jsonify({"error": str(e)}), 500
     finally:
         session.close()
 
-# Mark Notification as Read
-@notification_controller.route('/mark_notif/<int:notification_id>', methods=['PATCH'])
-@cross_origin()
-def mark_notification_as_read(notification_id):
-    session = SessionLocal()
-    try:
-        notification = session.query(Notification).filter_by(id=notification_id).first()
-        if not notification:
-            return jsonify({"error": "Notification not found"}), 404
-
-        notification.is_read = True  # Mark the notification as done
-        session.commit()
-        return jsonify({"message": "Notification marked as read"}), 200
-    except Exception as e:
-        session.rollback()
-        return jsonify({"error": str(e)}), 500
-    finally:
-        session.close()
 
 
 # Delete Notification
