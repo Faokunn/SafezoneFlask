@@ -120,6 +120,24 @@ def get_new_unread_notifications(user_id):
     finally:
         session.close()
 
+# Mark Notification as Read
+@notification_controller.route('/mark_notif/<int:notification_id>', methods=['PATCH'])
+@cross_origin()
+def mark_notification_as_read(notification_id):
+    session = SessionLocal()
+    try:
+        notification = session.query(Notification).filter_by(id=notification_id).first()
+        if not notification:
+            return jsonify({"error": "Notification not found"}), 404
+
+        notification.is_read = True  # Mark the notification as done
+        session.commit()
+        return jsonify({"message": "Notification marked as read"}), 200
+    except Exception as e:
+        session.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
 
 
 # Delete Notification
