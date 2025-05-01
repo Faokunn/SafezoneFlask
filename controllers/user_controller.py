@@ -36,6 +36,7 @@ def format_user_data(user_obj, profile_obj):
             "active_circle": profile_obj.get("circle"),
             "profile_picture": profile_obj.get("profile_picture_url"),
             "phone_number": profile_obj.get("phone_number", "01234567890"),
+            "age": profile_obj.get("age", 18)
 
         }
     }
@@ -72,8 +73,9 @@ def create_account():
     is_girl = data.get('is_girl', True)     # Default to True
     is_verified = data.get('is_verified', False)
     status = data.get('status', "Safe")  # Default to False
+    age = data.get('age')
 
-    if not username or not email or not password or not address or not first_name or not last_name:
+    if not username or not email or not password or not address or not first_name or not last_name or not age:
         return jsonify({"error": "Missing required fields"}), 400
 
     try:
@@ -92,6 +94,7 @@ def create_account():
             is_girl=is_girl,
             is_verified=is_verified,
             status=status,
+            age=age,
         )
         session.add(profile)
         session.commit()
@@ -151,6 +154,7 @@ def login():
                 "active_circle": active_circle_id,
                 "profile_picture": profile_obj.profile_picture_url,
                 "phone_number": profile_obj.phone_number if profile_obj.phone_number else "01234567890",
+                "age" : profile_obj.age
             }
         }), 200
 

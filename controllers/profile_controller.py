@@ -29,7 +29,8 @@ def format_profile_data(profile_obj):
             "status": profile_obj.status,
             "latitude": profile_obj.latitude,
             "longitude": profile_obj.longitude,
-            "profile_picture": profile_obj.profile_picture
+            "profile_picture": profile_obj.profile_picture,
+            "age" : profile_obj.age
         }
     }
 

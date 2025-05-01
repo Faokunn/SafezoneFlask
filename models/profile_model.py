@@ -19,6 +19,7 @@ class Profile(Base):
     circle = Column(Integer, nullable=True)
     profile_picture_url = Column(String, nullable=True)
     phone_number = Column(String, nullable=True)
+    age = Column(Integer, nullable=False)
     user = relationship("User", back_populates="profile")
 
     def to_dict(self):
@@ -36,5 +37,6 @@ class Profile(Base):
             "longitude": self.longitude,
             "profile_picture_url": self.profile_picture_url,
             "circle": self.circle,
-            "phone_number": self.phone_number
+            "phone_number": self.phone_number,
+            "age" : self.age
         }
