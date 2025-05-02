@@ -79,7 +79,11 @@ def create_account():
         return jsonify({"error": "Missing required fields"}), 400
 
     try:
-        # Create user (no password hashing)
+        # Check if user already in circle
+        existing_user = session.query(User).filter((User.email == email) | (User.username == username)).first()
+        if existing_user:
+            return jsonify({"message": "Email or Username already exist "}), 400
+        
         new_user = User(username=username, email=email, password=password)  # Store password as plain text
         session.add(new_user)
         session.commit()
