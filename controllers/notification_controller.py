@@ -179,7 +179,7 @@ def send_notification_to_circle_members():
 #Broadcast to nearest police station
 @notification_controller.route('/broadcastpolicestation', methods=['POST'])
 @cross_origin()
-def create_notification():
+def send_notification_to_nearest_station():
     data = request.json
     title = data.get("title")
     message = data.get("message")
