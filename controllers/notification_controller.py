@@ -5,12 +5,13 @@ from flask import Blueprint, request, jsonify
 from database.base import SessionLocal
 from models.groupmembers_model import GroupMember
 from models.notifications import Notification
+from models.profile_model import Profile
 from dotenv import load_dotenv
 from sqlalchemy.orm import sessionmaker
 import os
 from database.base import db
 from flask_cors import cross_origin
-from sqlalchemy import Column, Integer, String, Boolean, Float, ForeignKey, Text, DateTime
+from sqlalchemy import Column, Integer, String, Boolean, Float, ForeignKey, Text, DateTime, func
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from database.base import Base
@@ -129,7 +130,7 @@ def delete_notification(notification_id):
         return jsonify({"error": str(e)}), 500
     finally:
         session.close()
-        
+#broadcast to every Circle Members
 @notification_controller.route('/broadcast', methods=['POST'])
 @cross_origin()
 def send_notification_to_circle_members():
@@ -169,6 +170,51 @@ def send_notification_to_circle_members():
 
         return jsonify({"message": f"Notification sent to {len(member_ids)} group members"}), 201
 
+    except Exception as e:
+        session.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+#Broadcast to nearest police station
+@notification_controller.route('/broadcastpolicestation', methods=['POST'])
+@cross_origin()
+def create_notification():
+    data = request.json
+    title = data.get("title")
+    message = data.get("message")
+    type = data.get("type")
+    police_station_name = data.get("police_station_name")
+    is_done = data.get("is_done", False)  # Default to False if not provided
+
+    if not all([title, message, type, police_station_name]):
+        return jsonify({"error": "Missing required fields"}), 400
+
+    session = SessionLocal()
+    try:
+        # Find the police station user
+        police_station_user = (
+            session.query(Profile)
+            .filter(
+                func.trim(func.concat(Profile.first_name, ' ', Profile.last_name)) == police_station_name
+            )
+            .first()
+        )
+
+        if not police_station_user:
+            return jsonify({"error": f"Police station '{police_station_name}' not found"}), 404
+
+        # Create the notification for that user
+        new_notification = Notification(
+            user_id=police_station_user.id, 
+            title=title, 
+            message=message, 
+            type=type, 
+            is_done=is_done
+        )
+        session.add(new_notification)
+        session.commit()
+        return jsonify({"message": f"Notification sent to {police_station_name}!"}), 200
     except Exception as e:
         session.rollback()
         return jsonify({"error": str(e)}), 500
