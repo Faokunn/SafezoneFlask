@@ -165,8 +165,9 @@ def send_notification_to_circle_members():
             Notification(user_id=member_id, title=title, message=message, type=type, is_done=is_done)
             for member_id in member_ids
         ]
-        session.bulk_save_objects(notifications)
+        session.bulk_save_objects(notifications) 
         session.commit()
+        # gello
 
         return jsonify({"message": f"Notification sent to {len(member_ids)} group members"}), 201
 
