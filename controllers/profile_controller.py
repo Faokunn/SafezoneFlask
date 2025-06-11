@@ -10,6 +10,7 @@ from sqlalchemy.orm import sessionmaker
 from database.base import db
 from flask_cors import cross_origin
 from google.cloud import storage
+from firebase_admin import storage
 
 # Load environment variables from .env file
 load_dotenv()
@@ -110,26 +111,6 @@ def update_status():
     finally:
         session.close()
 
-# Upload Profile Picture to Firebase Storage
-def upload_profile_picture(user_id, file_path):
-    """Uploads a profile picture to Firebase Storage and returns the URL."""
-    bucket_name = os.getenv("FIREBASE_STORAGE_BUCKET")  # 🔹 Load bucket name from .env
-    storage_client = storage.Client()
-    bucket = storage_client.bucket(bucket_name)
-    
-    # 🔹 Define the file path in Firebase Storage (e.g., "profile_pictures/user_id.jpg")
-    blob = bucket.blob(f"profile_pictures/{user_id}.jpg")
-
-    # 🔹 Upload the image
-    blob.upload_from_filename(file_path)
-
-    # 🔹 Make the image publicly accessible
-    blob.make_public()
-    download_url = blob.public_url
-
-    print(f"Profile picture uploaded: {download_url}")
-    return download_url  # 🔹 Return the image URL
-
 # Save Profile Picture in Database
 def update_profile_picture_in_db(user_id, profile_picture_url):
     """Updates the user's profile picture URL in the database."""
@@ -149,31 +130,39 @@ def update_profile_picture_in_db(user_id, profile_picture_url):
     finally:
         session.close()
 
+def upload_profile_picture(user_id, file):
+    """Uploads a profile picture to Firebase Storage and returns the URL."""
+    bucket = storage.bucket()
+    
+    blob = bucket.blob(f"profile_pictures/{user_id}.jpg")
+    blob.upload_from_file(file, content_type=file.mimetype)  # ✅ use file-like object
+    blob.make_public()
+
+    return blob.public_url        
+
 # Upload Profile Picture API
 @profile_controller.route('/upload-profile-picture', methods=['POST'])
 @cross_origin()
 def upload_profile_picture_api():
-    """API to handle profile picture uploads."""
     user_id = request.form.get("user_id")
-    file = request.files.get("file")
+    file = request.files.get("file")  
 
     if not user_id or not file:
         return jsonify({"error": "Missing user_id or file"}), 400
 
-    # Save file temporarily
-    file_path = f"/tmp/{user_id}.jpg"
-    file.save(file_path)
+    try:
 
-    # Upload to Firebase Storage
-    profile_picture_url = upload_profile_picture(user_id, file_path)
+        profile_picture_url = upload_profile_picture(user_id, file)
+        success, message = update_profile_picture_in_db(user_id, profile_picture_url)
 
-    # Update the database with the profile picture URL
-    success, message = update_profile_picture_in_db(user_id, profile_picture_url)
+        if success:
+            return jsonify({"message": message, "profile_picture_url": profile_picture_url}), 200
+        else:
+            return jsonify({"error": message}), 500
 
-    if success:
-        return jsonify({"message": message, "profile_picture_url": profile_picture_url}), 200
-    else:
-        return jsonify({"error": message}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 # Get Profile Picture API
 @profile_controller.route('/get-profile-picture/<int:user_id>', methods=['GET'])
