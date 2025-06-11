@@ -30,7 +30,7 @@ def format_profile_data(profile_obj):
             "status": profile_obj.status,
             "latitude": profile_obj.latitude,
             "longitude": profile_obj.longitude,
-            "profile_picture": profile_obj.profile_picture,
+            "profile_picture_url": profile_obj.profile_picture_url,
             "age" : profile_obj.age
         }
     }
@@ -122,7 +122,7 @@ def update_profile_picture_in_db(user_id, profile_picture_url):
             return False, "Profile not found"
 
         # 🔹 Update the profile picture URL in the database
-        profile_obj.profile_picture = profile_picture_url
+        profile_obj.profile_picture_url = profile_picture_url
         session.commit()
         return True, "Profile picture updated successfully"
     except Exception as e:
@@ -172,8 +172,8 @@ def get_profile_picture(user_id):
     session = SessionLocal()
     try:
         profile_obj = session.query(Profile).filter_by(user_id=user_id).first()
-        if not profile_obj or not profile_obj.profile_picture:
+        if not profile_obj or not profile_obj.profile_picture_url:
             return jsonify({"error": "Profile picture not found"}), 404
-        return jsonify({"profile_picture_url": profile_obj.profile_picture}), 200
+        return jsonify({"profile_picture_url": profile_obj.profile_picture_url}), 200
     finally:
         session.close()
