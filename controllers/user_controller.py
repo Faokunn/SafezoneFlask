@@ -36,6 +36,7 @@ def format_user_data(user_obj, profile_obj):
             "active_circle": profile_obj.get("circle"),
             "profile_picture": profile_obj.get("profile_picture_url"),
             "phone_number": profile_obj.get("phone_number", "01234567890"),
+            "age": profile_obj.get("age", 18)
 
         }
     }
@@ -72,12 +73,17 @@ def create_account():
     is_girl = data.get('is_girl', True)     # Default to True
     is_verified = data.get('is_verified', False)
     status = data.get('status', "Safe")  # Default to False
+    age = data.get('age')
 
-    if not username or not email or not password or not address or not first_name or not last_name:
+    if not username or not email or not password or not address or not first_name or not last_name or not age:
         return jsonify({"error": "Missing required fields"}), 400
 
     try:
-        # Create user (no password hashing)
+        # Check if user already in circle
+        existing_user = session.query(User).filter((User.email == email) | (User.username == username)).first()
+        if existing_user:
+            return jsonify({"message": "Email or Username already exist "}), 400
+        
         new_user = User(username=username, email=email, password=password)  # Store password as plain text
         session.add(new_user)
         session.commit()
@@ -92,6 +98,7 @@ def create_account():
             is_girl=is_girl,
             is_verified=is_verified,
             status=status,
+            age=age,
         )
         session.add(profile)
         session.commit()
@@ -151,6 +158,7 @@ def login():
                 "active_circle": active_circle_id,
                 "profile_picture": profile_obj.profile_picture_url,
                 "phone_number": profile_obj.phone_number if profile_obj.phone_number else "01234567890",
+                "age" : profile_obj.age
             }
         }), 200
 
@@ -167,7 +175,8 @@ def get_all_users():
         profile_obj = session.query(Profile).filter_by(user_id=user_obj.id).first()
         user_data = format_user_data(user_obj, profile_obj)
         user_list.append(user_data)
-    
+
+
     return jsonify(user_list), 200
 
 @user_controller.route('/change_password', methods=['PATCH'])
@@ -187,4 +196,42 @@ def change_password():
         return jsonify({"message": "Password updated successfully"}), 200
     
     return jsonify({"error": "Invalid credentials"}), 401
+
+@user_controller.route('/reset_password', methods=['PATCH'])
+def reset_password():
+    data = request.get_json()
+    email = data.get('email')
+    password = data.get('password')
+    newpassword = data.get('newpassword')
+
+    if not email or not password or not newpassword:
+        return jsonify({"error": "Missing email, password, or new password"}), 400
+
+    user_obj = session.query(User).filter_by(email=email).first()
+
+    if not user_obj:
+        return jsonify({"error": "User not found"}), 404  
+
+    if user_obj.password != password:
+        return jsonify({"error": "Current password is incorrect"}), 401 
+
+    user_obj.password = newpassword
+    session.commit()
+    return jsonify({"message": "Password updated successfully"}), 200
+
+    
+@user_controller.route('/check_email', methods=['POST'])
+def check_email():
+    data = request.get_json()
+    email = data.get('email')
+
+    if not email:
+        return jsonify({"error": "Email is required"}), 400
+
+    user_obj = session.query(User).filter_by(email=email).first()
+
+    if user_obj:
+        return jsonify({"message": "Email exists"}), 200
+
+    return jsonify({"error": "Email not found"}), 404
 
