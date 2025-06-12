@@ -150,6 +150,7 @@ def view_members():
             "user_id": member.id,
             "first_name": profile.first_name if profile else "",
             "last_name": profile.last_name if profile else "",
+            "profile_picture": profile.profile_picture_url if profile else "",
             "status": profile.status if profile else "Safe",
             "latitude": profile.latitude if profile else 0.0,
             "longitude": profile.longitude if profile else 0.0,
