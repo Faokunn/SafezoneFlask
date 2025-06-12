@@ -173,6 +173,7 @@ def send_notification_to_circle_members():
 
     except Exception as e:
         session.rollback()
+        
         return jsonify({"error": str(e)}), 500
     finally:
         session.close()
