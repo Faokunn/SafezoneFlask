@@ -135,7 +135,7 @@ def upload_profile_picture(user_id, file):
     """Uploads a profile picture to Firebase Storage and returns the URL."""
     bucket = storage.bucket()
     
-    blob = bucket.blob(f"profile_pictures/{user_id}.jpg")
+    blob = bucket.blob(f"profile_pictures/{file}.jpg")
     blob.upload_from_file(file, content_type=file.mimetype)  # ✅ use file-like object
     blob.make_public()
 
