@@ -6,6 +6,7 @@ from database.base import Base
 class SafeZoneStatusHistory(Base):
     __tablename__ = 'safe_zone_status_history'
 
+    
     id = Column(Integer, primary_key=True)
     safe_zone_id = Column(Integer, ForeignKey('safe_zones.id'), nullable=False)
     status = Column(String, nullable=False)  
