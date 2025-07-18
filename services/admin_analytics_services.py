@@ -37,7 +37,8 @@ def get_users_with_incidents_and_safe_zones_service(session):
             user_data = {
                 "id": user.id,
                 "username": user.username, 
-                "email": user.email,  
+                "email": user.email,
+                "profile_picture_url": user.profile.profile_picture_url if user.profile else None, 
                 "incident_reports": [incident.to_dict() for incident in user.incident_reports],
                 "safe_zones": [safe_zone.to_dict() for safe_zone in user.safe_zones]
             }
@@ -46,7 +47,6 @@ def get_users_with_incidents_and_safe_zones_service(session):
         return result
     except Exception as e:
         return str(e)
-
 
 ## INCIDENTS
 
@@ -67,6 +67,7 @@ def get_users_with_incidents_service(session):
                 "id": user.id,
                 "username": user.username,  # Assuming `name` is a field in your User model
                 "email": user.email,  # Assuming `email` is a field in your User model
+                "profile_picture_url": user.profile.profile_picture_url if user.profile else None, 
                 "incident_reports": [incident.to_dict() for incident in user.incident_reports]
             }
             result.append(user_data)
@@ -99,6 +100,7 @@ def get_users_with_safe_zones_service(session):
                 "id": user.id,
                 "username": user.username,  # Assuming `name` is a field in your User model
                 "email": user.email,  # Assuming `email` is a field in your User model
+                "profile_picture_url": user.profile.profile_picture_url if user.profile else None, 
                 "safe_zones": [safe_zone.to_dict() for safe_zone in user.safe_zones]
             }
             result.append(user_data)

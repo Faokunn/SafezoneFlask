@@ -1,3 +1,5 @@
+import os
+import uuid
 from models.dangerzone_model import DangerZone
 from models.incident_report_status_history import IncidentReportStatusHistory
 from models.incidentreport_model import IncidentReport
@@ -25,18 +27,22 @@ def add_status_history(session, incident_report_id, status, remarks=None):
 
 def upload_images_to_firebase(files):
     uploaded_urls = []
-    
-    if not files:
-        return uploaded_urls 
 
-    bucket = storage.bucket() 
-    
+    if not files:
+        return uploaded_urls
+
+    bucket = storage.bucket()
+
     for file in files:
-        filename = file.filename.lower()
-        if not filename.endswith((".jpg", ".jpeg", ".png")):
-            abort(400, description=f"File {filename} must be an image")
-        
-        blob = bucket.blob(f"incident_images/{filename}")  
+        original_filename = file.filename.lower()
+        if not original_filename.endswith((".jpg", ".jpeg", ".png")):
+            abort(400, description=f"File {original_filename} must be an image")
+
+        ext = os.path.splitext(original_filename)[1] 
+        unique_filename = f"{uuid.uuid4().hex}{ext}"
+
+        blob = bucket.blob(f"incident_images/{unique_filename}")
+
         blob.upload_from_file(file, content_type=file.mimetype)
         blob.make_public()  
         uploaded_urls.append(blob.public_url)
