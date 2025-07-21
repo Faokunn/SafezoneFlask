@@ -13,6 +13,7 @@ class Profile(Base):
     is_admin = Column(Boolean, default=False)
     is_girl = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)
+    activity_status = Column(Boolean, default=True)
     status = Column(String, default="Safe")
     latitude = Column(Float, nullable=False, default=0.0)
     longitude = Column(Float, nullable=False, default=0.0)
