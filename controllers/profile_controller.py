@@ -27,6 +27,7 @@ def format_profile_data(profile_obj):
             "is_admin": profile_obj.is_admin,
             "is_girl": profile_obj.is_girl,
             "is_verified": profile_obj.is_verified,
+            "activity_status": profile_obj.activity_status,
             "status": profile_obj.status,
             "latitude": profile_obj.latitude,
             "longitude": profile_obj.longitude,

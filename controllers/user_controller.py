@@ -72,6 +72,7 @@ def create_account():
     is_admin = data.get('is_admin', False)  # Default to False
     is_girl = data.get('is_girl', True)     # Default to True
     is_verified = data.get('is_verified', False)
+    activity_status = data.get('activity_status', True)
     status = data.get('status', "Safe")  # Default to False
     age = data.get('age')
 
@@ -97,6 +98,7 @@ def create_account():
             is_admin=is_admin,
             is_girl=is_girl,
             is_verified=is_verified,
+            activity_status=activity_status,
             status=status,
             age=age,
         )
@@ -154,6 +156,7 @@ def login():
                 "is_admin": profile_obj.is_admin if profile_obj.is_admin is not None else False,
                 "is_girl": profile_obj.is_girl if profile_obj.is_girl is not None else True,
                 "is_verified": profile_obj.is_verified if profile_obj.is_verified is not None else False,
+                "activity_status": profile_obj.activity_status if profile_obj.activity_status is not None else False,
                 "status": profile_obj.status if profile_obj.status else "Safe",
                 "active_circle": active_circle_id,
                 "profile_picture": profile_obj.profile_picture_url,
