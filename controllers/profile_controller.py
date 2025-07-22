@@ -76,7 +76,6 @@ def update_location():
             "latitude": latitude,
             "longitude": longitude,
             "timestamp": firestore.SERVER_TIMESTAMP,
-            "circleSharing" : {}
         })
 
         return jsonify({"message": "Location updated!"}), 200

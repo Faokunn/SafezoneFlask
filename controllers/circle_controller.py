@@ -76,7 +76,7 @@ def create_circle():
 
             existing_sharing[str(new_circle.id)] = True
 
-            user_ref.set({
+            user_ref.update({
                 "circleSharing": existing_sharing
             }, merge=True)
 
@@ -126,7 +126,7 @@ def join_circle():
 
             existing_sharing[str(circle.id)] = True
 
-            user_ref.set({
+            user_ref.update({
                 "circleSharing": existing_sharing},
                 merge=True)
         except Exception as e:
