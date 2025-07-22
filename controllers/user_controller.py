@@ -8,6 +8,9 @@ from sqlalchemy.orm import sessionmaker
 from werkzeug.security import generate_password_hash, check_password_hash
 from database.base import engine
 from flask_jwt_extended import create_access_token
+from firebase_admin import firestore
+from firebase_admin import storage
+from database.base import db
 
 # Create a session
 Session = sessionmaker(bind=engine)
@@ -114,6 +117,13 @@ def create_account():
             )
             session.add(new_contact)
         session.commit()
+
+        db.collection("locations").document(str(new_user.id)).set({
+            "latitude": None,
+            "longitude": None,
+            "timestamp": firestore.SERVER_TIMESTAMP,
+            "circleSharing": {}  # Initialize as empty dictionary
+        })
 
         return jsonify({
             "message": "User, profile, and emergency contacts created successfully",
