@@ -37,7 +37,7 @@ def format_user_data(user_obj, profile_obj):
             "is_verified": profile_obj.get("is_verified", False),
             "status": profile_obj.get("status", "Safe"),
             "active_circle": profile_obj.get("circle"),
-            "profile_picture": profile_obj.get("profile_picture_url"),
+            "profile_picture": profile_obj.get("profile_picture_url", "Safe"),
             "phone_number": profile_obj.get("phone_number", "01234567890"),
             "age": profile_obj.get("age", 18)
 
@@ -76,6 +76,7 @@ def create_account():
     is_girl = data.get('is_girl', True)     # Default to True
     is_verified = data.get('is_verified', False)
     activity_status = data.get('activity_status', True)
+    profile_picture_url = data.get('profile_picture_url', "Safe")
     status = data.get('status', "Safe")  # Default to False
     age = data.get('age')
 
@@ -101,6 +102,7 @@ def create_account():
             is_admin=is_admin,
             is_girl=is_girl,
             is_verified=is_verified,
+            profile_picture_url=profile_picture_url,
             activity_status=activity_status,
             status=status,
             age=age,
