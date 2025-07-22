@@ -77,7 +77,7 @@ def update_location():
             "longitude": longitude,
             "timestamp": firestore.SERVER_TIMESTAMP,
 
-            'circleSharing': {
+            "circleSharing": {
             }
         })
 
