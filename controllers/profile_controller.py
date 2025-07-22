@@ -75,7 +75,10 @@ def update_location():
         db.collection("locations").document(str(user_id)).set({ 
             "latitude": latitude,
             "longitude": longitude,
-            "timestamp": firestore.SERVER_TIMESTAMP
+            "timestamp": firestore.SERVER_TIMESTAMP,
+
+            'circleSharing': {
+            }
         })
 
         return jsonify({"message": "Location updated!"}), 200

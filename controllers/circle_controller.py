@@ -65,6 +65,24 @@ def create_circle():
         session.add(group_member)
         session.commit()
 
+        try:
+            from firebase_admin import firestore
+            db = firestore.client()
+
+            user_ref = db.collection("locations").document(str(user_id))
+
+            current_data = user_ref.get()
+            existing_sharing = current_data.to_dict().get("circleSharing", {}) if current_data.exists else {}
+
+            existing_sharing[str(new_circle.id)] = True
+
+            user_ref.set({
+                "circleSharing": existing_sharing
+            }, merge=True)
+
+        except Exception as e:
+            return jsonify({"error": f"Failed to update Firestore after join: {str(e)}"}), 500
+
         return jsonify({"message": "Circle created successfully", "circle_id": new_circle.id}), 201
     except Exception as e:
         session.rollback()
@@ -96,6 +114,23 @@ def join_circle():
         new_member = GroupMember(user_id=user_id, circle_id=circle.id)
         session.add(new_member)
         session.commit()
+
+        try:
+            from firebase_admin import firestore
+            db = firestore.client()
+
+            user_ref = db.collection("location").document(str(user_id))
+
+            current_data = user_ref.get()
+            existing_sharing = current_data.get("circleSharing", {}) if current_data.exists else {}
+
+            existing_sharing[str(circle.id)] = True
+
+            user_ref.set({
+                "circleSharing": existing_sharing},
+                merge=True)
+        except Exception as e:
+            return jsonify({"error": f"Failed to update Firestore after join: {str(e)}"}), 500
 
         return jsonify({"message": "User successfully joined the circle"}), 200
 
