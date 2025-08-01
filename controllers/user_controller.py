@@ -246,7 +246,7 @@ def check_email():
     user_obj = session.query(User).filter_by(email=email).first()
 
     if user_obj:
-        return jsonify({"message": "Email exists"}), 200
+        return jsonify({"message": "Email already exists"}), 404
 
-    return jsonify({"error": "Email not found"}), 404
+    return jsonify({"error": "Email is available"}), 200
 
