@@ -1,12 +1,14 @@
 from flask import Blueprint, request, jsonify
 from sqlalchemy.orm import sessionmaker
 from models.circle_model import Circle
+from models.notifications import Notification
 from models.profile_model import Profile
 from models.user_model import User
 from models.groupmembers_model import GroupMember
 from database.base import engine
 import random
 import datetime
+from controllers.notification_controller import create_circle_notification
 
 # Create a session
 Session = sessionmaker(bind=engine)
@@ -120,23 +122,43 @@ def join_circle():
             db = firestore.client()
 
             user_ref = db.collection("location").document(str(user_id))
-
             current_data = user_ref.get()
             existing_sharing = current_data.get("circleSharing", {}) if current_data.exists else {}
-
             existing_sharing[str(circle.id)] = True
-
             user_ref.set({
-                "circleSharing": existing_sharing},
-                merge=True)
+                "circleSharing": existing_sharing
+            }, merge=True)
         except Exception as e:
             return jsonify({"error": f"Failed to update Firestore after join: {str(e)}"}), 500
 
+        # Get full name of the joining user
+        profile = session.query(Profile).filter_by(user_id=user_id).first()
+        full_name = f"{profile.first_name} {profile.last_name}" if profile else f"User {user_id}"
+
+        # Notify other members
+        other_members = session.query(GroupMember).filter(
+            GroupMember.circle_id == circle.id,
+            GroupMember.user_id != user_id
+        ).all()
+
+        for member in other_members:
+            create_circle_notification(
+                user_id=member.user_id,
+                title="New member joined",
+                message=f"{full_name} has joined your circle!",
+                type="info",
+                circle_id=circle.id
+            )
+
+        session.commit()
+
         return jsonify({"message": "User successfully joined the circle"}), 200
+
 
     except Exception as e:
         session.rollback()
         return jsonify({"error": str(e)}), 500
+
 # Remove a user from a circle
 @circle_controller.route('/remove_member', methods=['POST'])
 def remove_member():
@@ -153,10 +175,31 @@ def remove_member():
     if not group_member:
         return jsonify({"error": "User is not a member of this circle"}), 404
 
+    # Get full name of the removed user
+    profile = session.query(Profile).filter_by(user_id=user_id).first()
+    full_name = f"{profile.first_name} {profile.last_name}" if profile else f"User {user_id}"
+
+    # Notify other members in the circle
+    other_members = session.query(GroupMember).filter(
+        GroupMember.circle_id == circle_id,
+        GroupMember.user_id != user_id
+    ).all()
+
+    for member in other_members:
+        create_circle_notification(
+            user_id=member.user_id,
+            title="Member removed",
+            message = f"{full_name} has left your circle.",
+            type="info",
+            circle_id=circle_id
+        )
+
+    # Remove the member
     session.delete(group_member)
     session.commit()
 
     return jsonify({"message": "User removed from the circle successfully"}), 200
+
 
 # View all users in a circle
 @circle_controller.route('/view_members', methods=['GET'])

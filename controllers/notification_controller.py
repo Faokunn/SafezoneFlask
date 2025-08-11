@@ -3,6 +3,7 @@ from database.base import firebase_admin
 from firebase_admin import firestore
 from flask import Blueprint, request, jsonify
 from database.base import SessionLocal
+from models.circle_model import Circle
 from models.groupmembers_model import GroupMember
 from models.notifications import Notification
 from models.profile_model import Profile
@@ -49,6 +50,44 @@ def create_notification():
         session.add(new_notification)
         session.commit()
         return jsonify({"message": "Notification created successfully!"}), 201
+    except Exception as e:
+        session.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+# Create Circle Notification
+@notification_controller.route('/create_circle_notif', methods=['POST'])
+@cross_origin()
+def create_circle_notification(user_id, title, message, type, circle_id, is_done=False):
+    if not all([user_id, title, message, type, circle_id]):
+        return jsonify({"error": "Missing required fields"}), 400
+
+    session = SessionLocal()
+    try:
+        circle = session.query(Circle).filter_by(id=circle_id).first()
+        if not circle:
+            return jsonify({"error": "Circle not found"}), 404
+
+        members = session.query(GroupMember).filter_by(circle_id=circle_id).all()
+
+        for member in members:
+            new_notification = Notification(
+                user_id=member.user_id,
+                title=title,
+                message=message,
+                type=type,
+                is_done=is_done
+            )
+            session.add(new_notification)
+
+        session.commit()
+
+        return jsonify({
+            "message": "Notification created successfully!",
+            "members": [m.to_dict() for m in members]
+        }), 201
+
     except Exception as e:
         session.rollback()
         return jsonify({"error": str(e)}), 500
@@ -284,3 +323,4 @@ def mark_notification_as_done(notification_id):
         return jsonify({"error": str(e)}), 500
     finally:
         session.close()
+

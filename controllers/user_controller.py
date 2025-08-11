@@ -20,8 +20,6 @@ session = Session()
 user_controller = Blueprint('user_controller', __name__)
 
 def format_user_data(user_obj, profile_obj):
-    if not profile_obj:
-        profile_obj = {}  # Empty dictionary if profile is missing
     return {
         "user": {
             "id": user_obj.id,
@@ -29,20 +27,20 @@ def format_user_data(user_obj, profile_obj):
             "email": user_obj.email,
         },
         "profile": {
-            "address": profile_obj.get("address", "Address not available"),
-            "first_name": profile_obj.get("first_name", "").upper(),
-            "last_name": profile_obj.get("last_name", "").upper(),
-            "is_admin": profile_obj.get("is_admin", False),
-            "is_girl": profile_obj.get("is_girl", True),
-            "is_verified": profile_obj.get("is_verified", False),
-            "status": profile_obj.get("status", "Safe"),
-            "active_circle": profile_obj.get("circle"),
-            "profile_picture": profile_obj.get("profile_picture_url", "Safe"),
-            "phone_number": profile_obj.get("phone_number", "01234567890"),
-            "age": profile_obj.get("age", 18)
-
+            "address": getattr(profile_obj, "address", "Address not available"),
+            "first_name": getattr(profile_obj, "first_name", "").upper(),
+            "last_name": getattr(profile_obj, "last_name", "").upper(),
+            "is_admin": getattr(profile_obj, "is_admin", False),
+            "is_girl": getattr(profile_obj, "is_girl", True),
+            "is_verified": getattr(profile_obj, "is_verified", False),
+            "status": getattr(profile_obj, "status", "Safe"),
+            "active_circle": getattr(profile_obj, "circle", None),
+            "profile_picture": getattr(profile_obj, "profile_picture_url", "Safe"),
+            "phone_number": getattr(profile_obj, "phone_number", "01234567890"),
+            "age": getattr(profile_obj, "age", 18)
         }
     }
+
 
 
 # Emergency contacts for Dagupan City
