@@ -12,6 +12,7 @@ class IncidentReport(Base):
     danger_zone_id = Column(Integer, ForeignKey('danger_zones.id'), nullable=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     description = Column(Text, nullable=False)
+    report_type = Column(String(50), nullable=False)
     report_date = Column(Date, nullable=False)
     report_time = Column(Time, nullable=False)
     images = Column(JSON, nullable=True)
@@ -29,6 +30,7 @@ class IncidentReport(Base):
             "user_id": self.user_id,
             "danger_zone_id": self.danger_zone_id,
             "description": self.description,
+            "report_type": self.report_type,
             "report_date": self.report_date,
             "report_time": self.report_time.strftime("%H:%M:%S") if self.report_time else None,  
             "images": self.images,

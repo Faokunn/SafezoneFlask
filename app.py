@@ -35,6 +35,7 @@ from controllers.safe_zone_controller import safe_zone_controller
 from controllers.profile_controller import profile_controller
 from controllers.groupmembers_controller import groupmember_controller
 from controllers.notification_controller import notification_controller
+from controllers.map_controller import map_controller
 
 
 load_dotenv()
@@ -62,6 +63,7 @@ app.register_blueprint(safe_zone_controller, url_prefix='/safe-zone')
 app.register_blueprint(profile_controller, url_prefix='/profile')
 app.register_blueprint(groupmember_controller, url_prefix='/groupmember')
 app.register_blueprint(notification_controller, url_prefix='/notifications')
+app.register_blueprint(map_controller, url_prefix='/map')
 
 
 @app.route('/')

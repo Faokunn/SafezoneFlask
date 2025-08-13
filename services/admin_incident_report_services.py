@@ -36,12 +36,14 @@ def verify_incident_report_service(incident_id, session):
             danger_zone = session.query(DangerZone).filter_by(id=incident_report.danger_zone_id).first()
             if danger_zone:
                 danger_zone.is_verified = True
+                danger_zone.show_map = True 
                 danger_zone.updated_at = datetime.now()
                 session.add(danger_zone)
 
                 danger_zone_data = {
                     "id": danger_zone.id,
                     "is_verified": danger_zone.is_verified,
+                    "show_map": danger_zone.show_map,
                     "updated_at": danger_zone.updated_at.isoformat(),
                 }
 
@@ -106,6 +108,21 @@ def under_review_incident_report_service(incident_id, session):
 
         add_status_history(session, incident_report_id=incident_id, status="under review", remarks="Incident report is under review.")
 
+        danger_zone_data = None
+        if incident_report.danger_zone_id:
+            danger_zone = session.query(DangerZone).filter_by(id=incident_report.danger_zone_id).first()
+            if danger_zone:
+                danger_zone.show_map = True
+                danger_zone.updated_at = datetime.now()
+                session.add(danger_zone)
+
+                danger_zone_data = {
+                    "id": danger_zone.id,
+                    "is_verified": danger_zone.is_verified,
+                    "show_map": danger_zone.show_map,
+                    "updated_at": danger_zone.updated_at.isoformat(),
+                }
+
         session.commit()
 
         return jsonify({
@@ -114,7 +131,8 @@ def under_review_incident_report_service(incident_id, session):
                 "id": incident_report.id,
                 "status": incident_report.status,
                 "updated_at": incident_report.updated_at.isoformat(),
-            }
+            },
+            "danger_zone": danger_zone_data,
         }), 200
 
     except IntegrityError as e:

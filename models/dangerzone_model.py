@@ -7,6 +7,7 @@ class DangerZone(Base):
     __tablename__ = 'danger_zones'
     id = Column(Integer, primary_key=True)
     is_verified = Column(Boolean, default=False, nullable=False)
+    show_map = Column(Boolean, default=False, nullable=False)
     latitude = Column(Float, nullable=False)
     longitude = Column(Float, nullable=False)
     radius = Column(Float, nullable=False)
@@ -18,6 +19,7 @@ class DangerZone(Base):
         return {
             "id": self.id,
             "is_verified": self.is_verified,
+            "show_map": self.show_map,
             "latitude": self.latitude,
             "longitude": self.longitude,
             "radius": self.radius,

@@ -114,7 +114,8 @@ def get_or_create_danger_zone(session, latitude, longitude, radius, name, danger
             longitude=longitude,
             radius=radius,
             name=name,
-            is_verified=False
+            is_verified=False,
+            show_map=False  
         )
         session.add(danger_zone)
         session.commit()
@@ -234,6 +235,7 @@ def create_incident_report_service(data, session):
             user_id=data['user_id'],
             danger_zone_id=danger_zone.id,
             description=data['description'],
+            report_type=data['report_type'],
             report_date=data['report_date'],
             report_time=data['report_time'],
             images=uploaded_image_urls, 
@@ -263,7 +265,7 @@ def create_incident_report_service(data, session):
         session.rollback()
         abort(500, description=f"An error occurred: {str(e)}")  
 
-    
+
 def update_incident_report_service(incident_id, data, session):
     try:
         incident = session.query(IncidentReport).filter_by(id=incident_id).first()
@@ -276,13 +278,19 @@ def update_incident_report_service(incident_id, data, session):
         incident.status = data.get('status', incident.status)
         incident.images = data.get('images', incident.images)
 
+        if 'report_type' in data and data['report_type']:
+            incident.report_type = data['report_type']  
+
         new_latitude = data.get('latitude')
         new_longitude = data.get('longitude')
         new_radius = data.get('radius') 
         new_name = data.get('name')  
 
         if new_latitude is not None and new_longitude is not None:
-            existing_danger_zone = session.query(DangerZone).filter_by(latitude=new_latitude, longitude=new_longitude).first()
+            existing_danger_zone = session.query(DangerZone).filter_by(
+                latitude=new_latitude,
+                longitude=new_longitude
+            ).first()
 
             if existing_danger_zone:
                 incident.danger_zone_id = existing_danger_zone.id
@@ -290,12 +298,13 @@ def update_incident_report_service(incident_id, data, session):
                 new_danger_zone = DangerZone(
                     latitude=new_latitude,
                     longitude=new_longitude,
-                    radius=new_radius if new_radius else 100,  
+                    radius=new_radius if new_radius else 100,
                     name=new_name if new_name else "Unknown",
-                    is_verified=False
+                    is_verified=False,
+                    show_map=False
                 )
                 session.add(new_danger_zone)
-                session.commit() 
+                session.commit()
                 incident.danger_zone_id = new_danger_zone.id  
 
         session.commit()

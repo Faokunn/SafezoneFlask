@@ -94,6 +94,7 @@ def create_incident():
             data = {
                 'user_id': int(request.form.get('user_id')),
                 'description': request.form.get('description'),
+                'report_type': request.form.get('report_type'),
                 'report_date': request.form.get('report_date'),
                 'report_time': request.form.get('report_time'),
                 'report_timestamp': request.form.get('report_timestamp'),
