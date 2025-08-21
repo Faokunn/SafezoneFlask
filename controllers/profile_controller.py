@@ -206,3 +206,43 @@ def get_profile_picture(user_id):
         return jsonify({"profile_picture_url": profile_obj.profile_picture_url}), 200
     finally:
         session.close()
+
+# Get Profile Statistics
+@profile_controller.route('/get-profile-statistics', methods=['GET'])
+@cross_origin()
+def get_profile_statistics():
+    session = SessionLocal()
+    try:
+        gender_stats = (
+            session.query(Profile.is_girl, db.func.count(Profile.id))
+            .group_by(Profile.is_girl)
+            .all()
+        )
+
+        gender_data = {
+            "male": 0,
+            "female": 0
+        }
+        for is_girl, count in gender_stats:
+            if is_girl:
+                gender_data["female"] = count
+            else:
+                gender_data["male"] = count
+
+        age_stats = (
+            session.query(Profile.age, db.func.count(Profile.id))
+            .group_by(Profile.age)
+            .all()
+        )
+
+        age_data = {str(age): count for age, count in age_stats if age is not None}
+
+        return jsonify({
+            "gender_statistics": gender_data,
+            "age_statistics": age_data
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
