@@ -11,6 +11,7 @@ from database.base import db
 from flask_cors import cross_origin
 from google.cloud import storage
 from firebase_admin import storage
+from sqlalchemy import func
 
 # Load environment variables from .env file
 load_dotenv()
@@ -214,7 +215,7 @@ def get_profile_statistics():
     session = SessionLocal()
     try:
         gender_stats = (
-            session.query(Profile.is_girl, db.func.count(Profile.id))
+            session.query(Profile.is_girl, func.count(Profile.id))
             .group_by(Profile.is_girl)
             .all()
         )
@@ -230,7 +231,7 @@ def get_profile_statistics():
                 gender_data["male"] = count
 
         age_stats = (
-            session.query(Profile.age, db.func.count(Profile.id))
+            session.query(Profile.age, func.count(Profile.id))
             .group_by(Profile.age)
             .all()
         )
