@@ -119,10 +119,15 @@ def create_account():
         session.commit()
 
         db.collection("locations").document(str(new_user.id)).set({
-            "latitude": None,
-            "longitude": None,
-            "timestamp": firestore.SERVER_TIMESTAMP,
-            "circleSharing": {}  # Initialize as empty dictionary
+            "first_name": first_name.upper(),
+            "last_name": last_name.upper(),
+            "status": status,
+            "activity_status": activity_status,
+            "profile_picture": profile_picture_url,
+            "latitude": None,          # will be updated later
+            "longitude": None,         # will be updated later
+            "circleSharing": {},       # initialize as empty dictionary
+            "timestamp": firestore.SERVER_TIMESTAMP
         })
 
         return jsonify({
