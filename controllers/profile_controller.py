@@ -106,7 +106,10 @@ def update_status():
         # Update the status field
         profile_obj.status = status
         session.commit()
-
+        db.collection("locations").document(str(user_id)).update({ 
+            "status": status,
+            "timestamp": firestore.SERVER_TIMESTAMP,
+        })
         return jsonify({"message": "Status updated!", "status": status}), 200
     except Exception as e:
         session.rollback()
@@ -134,7 +137,10 @@ def update_activity_status():
         # Update the status field
         profile_obj.status = status
         session.commit()
-
+        db.collection("locations").document(str(user_id)).update({ 
+            "status": status,
+            "timestamp": firestore.SERVER_TIMESTAMP,
+        })
         return jsonify({"message": "Status updated!", "status": status}), 200
     except Exception as e:
         session.rollback()
@@ -154,6 +160,10 @@ def update_profile_picture_in_db(user_id, profile_picture_url):
         # 🔹 Update the profile picture URL in the database
         profile_obj.profile_picture_url = profile_picture_url
         session.commit()
+        db.collection("locations").document(str(user_id)).update({ 
+            "profile_picture": profile_picture_url,
+            "timestamp": firestore.SERVER_TIMESTAMP,
+        })
         return True, "Profile picture updated successfully"
     except Exception as e:
         session.rollback()
@@ -168,7 +178,7 @@ def upload_profile_picture(user_id, file):
     blob = bucket.blob(f"profile_pictures/{file}.jpg")
     blob.upload_from_file(file, content_type=file.mimetype)  # ✅ use file-like object
     blob.make_public()
-
+    
     return blob.public_url        
 
 # Upload Profile Picture API
@@ -187,6 +197,10 @@ def upload_profile_picture_api():
         success, message = update_profile_picture_in_db(user_id, profile_picture_url)
 
         if success:
+            db.collection("locations").document(str(user_id)).update({ 
+            "profile_picture": profile_picture_url,
+            "timestamp": firestore.SERVER_TIMESTAMP,
+        })
             return jsonify({"message": message, "profile_picture_url": profile_picture_url}), 200
         else:
             return jsonify({"error": message}), 500
