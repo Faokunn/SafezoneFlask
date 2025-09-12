@@ -72,11 +72,12 @@ def create_account():
     # Get optional profile values with defaults if not provided
     is_admin = data.get('is_admin', False)  # Default to False
     is_girl = data.get('is_girl', True)     # Default to True
-    is_verified = data.get('is_verified', False)
+    is_verified = data.get('is_verified', None)
     activity_status = data.get('activity_status', True)
     profile_picture_url = data.get('profile_picture_url', "Safe")
     status = data.get('status', "Safe")  # Default to False
     age = data.get('age')
+    phone_number = data.get('phone_number')
 
     if not username or not email or not password or not address or not first_name or not last_name or not age:
         return jsonify({"error": "Missing required fields"}), 400
@@ -104,6 +105,7 @@ def create_account():
             activity_status=activity_status,
             status=status,
             age=age,
+            phone_number=phone_number
         )
         session.add(profile)
         session.commit()
