@@ -218,7 +218,7 @@ def send_notification_to_circle_members():
     finally:
         session.close()
 
-#Broadcast to nearest police station
+# Broadcast to nearest police station
 @notification_controller.route('/broadcastpolicestation', methods=['POST'])
 @cross_origin()
 def send_notification_to_nearest_station():
@@ -234,34 +234,46 @@ def send_notification_to_nearest_station():
 
     session = SessionLocal()
     try:
-        # Find the police station user
+        # Normalize input (case-insensitive match)
+        police_station_name = police_station_name.strip().lower()
+
+        # Split into first name and last name parts
+        name_parts = police_station_name.split(" ", 1)
+        first_name = name_parts[0].capitalize()
+        last_name = name_parts[1].capitalize() if len(name_parts) > 1 else ""
+
+        # Find the police station user (case-insensitive)
         police_station_user = (
             session.query(Profile)
             .filter(
-                func.trim(func.concat(Profile.first_name, ' ', Profile.last_name)) == police_station_name
+                func.lower(Profile.first_name) == first_name.lower(),
+                func.lower(Profile.last_name) == last_name.lower()
             )
             .first()
         )
 
         if not police_station_user:
-            return jsonify({"error": f"Police station '{police_station_name}' not found"}), 404
+            formatted_name = f"{first_name} {last_name}".strip()
+            formatted_name = formatted_name[0].upper() + formatted_name[1:]
+            return jsonify({"error": f"Police station '{formatted_name}' not found"}), 404
 
         # Create the notification for that user
         new_notification = Notification(
-            user_id=police_station_user.id, 
-            title=title, 
-            message=message, 
-            type=type, 
+            user_id=police_station_user.id,
+            title=title,
+            message=message,
+            type=type,
             is_done=is_done
         )
         session.add(new_notification)
         session.commit()
-        return jsonify({"message": f"Notification sent to {police_station_name}!"}), 200
+        return jsonify({"message": f"Notification sent to {first_name} {last_name}!"}), 200
     except Exception as e:
         session.rollback()
         return jsonify({"error": str(e)}), 500
     finally:
         session.close()
+
 
 
 # Get Unread Notifications Count
