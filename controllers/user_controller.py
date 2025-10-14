@@ -80,7 +80,7 @@ def create_account():
     phone_number = data.get('phone_number')
 
     if not username or not email or not password or not address or not first_name or not last_name or not age:
-        return jsonify({"error": "Missing required fields"}), 400
+        return jsonify({"message": "Missing required fields"}), 400
 
     try:
         # Check if user already in circle
@@ -138,7 +138,7 @@ def create_account():
         }), 201
     except IntegrityError:
         session.rollback()
-        return jsonify({"error": "Username or email already exists"}), 400
+        return jsonify({"message": "Username or email already exists"}), 400
 
 
 # Login Route (Return user and profile data)
