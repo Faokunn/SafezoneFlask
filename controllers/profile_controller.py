@@ -288,18 +288,30 @@ def request_admin_access():
 def deactivate_account():
     data = request.json
     user_id = data.get("user_id")
-    if not user_id:
-        return jsonify({"error": "Missing user_id"}), 400
+    status = data.get("status")  # Expecting True/False from frontend
+
+    if user_id is None or status is None:
+        return jsonify({"error": "Missing user_id or status"}), 400
 
     session = SessionLocal()
     try:
         profile_obj = session.query(Profile).filter_by(user_id=user_id).first()
         if not profile_obj:
-            return jsonify({"message": "Profile not found"}), 404
+            return jsonify({"error": "Profile not found"}), 404
 
-        profile_obj.activity_status = False 
+        # Toggle based on the incoming status
+        profile_obj.activity_status = not status
         session.commit()
 
-        return jsonify({"message": "Admin access request submitted!"}), 200
+        new_status = "deactivated" if not profile_obj.activity_status else "activated"
+        return jsonify({
+            "message": f"User account successfully {new_status}.",
+            "activity_status": profile_obj.activity_status
+        }), 200
+
+    except Exception as e:
+        session.rollback()
+        return jsonify({"error": str(e)}), 500
     finally:
         session.close()
+
