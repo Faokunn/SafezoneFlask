@@ -33,7 +33,7 @@ class Profile(Base):
             "is_admin": self.is_admin,
             "is_girl": self.is_girl,
             "is_verified": self.is_verified,
-            "activity_status": self.is_verified,
+            "activity_status": self.activity_status,
             "status": self.status,
             "latitude": self.latitude,
             "longitude": self.longitude,

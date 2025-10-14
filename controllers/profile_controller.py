@@ -282,3 +282,24 @@ def request_admin_access():
         return jsonify({"message": "Admin access request submitted!"}), 200
     finally:
         session.close()
+
+@profile_controller.route('/deactivate-account', methods=['PATCH'])
+@cross_origin()
+def deactivate_account():
+    data = request.json
+    user_id = data.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Missing user_id"}), 400
+
+    session = SessionLocal()
+    try:
+        profile_obj = session.query(Profile).filter_by(user_id=user_id).first()
+        if not profile_obj:
+            return jsonify({"message": "Profile not found"}), 404
+
+        profile_obj.activity_status = False 
+        session.commit()
+
+        return jsonify({"message": "Admin access request submitted!"}), 200
+    finally:
+        session.close()
