@@ -30,6 +30,7 @@ def get_all_users_safe_zones_incidents_service(session):
                 "email": user.email,
                 "activity_status": user.profile.activity_status if user.profile else None,
                 "profile_picture_url": user.profile.profile_picture_url if user.profile else None,
+                "is_girl": user.profile.is_girl if user.profile else None,
             }
             for user in users
         ]
