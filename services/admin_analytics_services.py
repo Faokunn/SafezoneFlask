@@ -12,34 +12,43 @@ Session = sessionmaker(bind=engine)
 
 def get_all_users_safe_zones_incidents_service(session):
     try:
-        users = (
-            session.query(User)
-            .options(
-                joinedload(User.profile),
-                joinedload(User.safe_zones),
-                joinedload(User.incident_reports)
-            )
-            .all()
-        )
+        # Fetch all data
+        users = session.query(User).options(
+            joinedload(User.profile),
+            joinedload(User.safe_zones),
+            joinedload(User.incident_reports)
+        ).all()
 
+        incident_reports = session.query(IncidentReport).all()
+        safe_zones = session.query(SafeZone).all()
+
+        # Format the data
+        users_data = [
+            {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "activity_status": user.profile.activity_status if user.profile else None,
+                "profile_picture_url": user.profile.profile_picture_url if user.profile else None,
+            }
+            for user in users
+        ]
+
+        incidents_data = [ir.to_dict() for ir in incident_reports]
+        safezones_data = [sz.to_dict() for sz in safe_zones]
+
+        # Final structured response
         result = {
-            "users": [
-                {
-                    "id": user.id,
-                    "username": user.username,
-                    "email": user.email,
-                    "activity_status": user.profile.activity_status if user.profile else None,
-                    "profile_picture_url": user.profile.profile_picture_url if user.profile else None,
-                    "safe_zones": [sz.to_dict() for sz in user.safe_zones],
-                    "incident_reports": [ir.to_dict() for ir in user.incident_reports],
-                }
-                for user in users
-            ]
+            "users": users_data,
+            "incident_reports": incidents_data,
+            "safe_zones": safezones_data
         }
 
         return result
+
     except Exception as e:
         return {"error": str(e)}
+
     
 
 ## SAFEZONES AND INCIDENTS
