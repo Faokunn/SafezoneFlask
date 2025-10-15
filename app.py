@@ -2,12 +2,14 @@ import os
 import json
 import psycopg2
 from dotenv import load_dotenv
-from flask import Flask
+from flask import Flask,request, jsonify
 from database.base import Base, engine
 from flasgger import Swagger
 from flask_cors import CORS
 import firebase_admin
 from firebase_admin import credentials, storage, firestore
+import requests
+
 
 
 from models.user_model import User
@@ -51,6 +53,10 @@ connection = psycopg2.connect(url)
 # Create tables in the database
 Base.metadata.create_all(bind=engine)
 
+FACEPP_KEY = os.getenv("FACEPP_KEY")
+FACEPP_SECRET = os.getenv("FACEPP_SECRET")
+THRESHOLD = float(os.getenv("THRESHOLD", 80))
+
 # Register the blueprints
 app.register_blueprint(user_controller, url_prefix='/user')
 app.register_blueprint(contact_controller, url_prefix='/contacts')
@@ -67,6 +73,39 @@ app.register_blueprint(groupmember_controller, url_prefix='/groupmember')
 app.register_blueprint(notification_controller, url_prefix='/notifications')
 app.register_blueprint(map_controller, url_prefix='/map')
 
+
+@app.route('/verify', methods=['POST'])
+def verify_face():
+    try:
+        data = request.json
+        id_image_base64 = data.get("id_image")
+        selfie_base64 = data.get("selfie_image")
+
+        if not id_image_base64 or not selfie_base64:
+            return jsonify({"error": "Both images are required"}), 400
+
+        response = requests.post(
+            "https://api-us.faceplusplus.com/facepp/v3/compare",
+            data={
+                "api_key": FACEPP_KEY,
+                "api_secret": FACEPP_SECRET,
+                "image_base64_1": id_image_base64,
+                "image_base64_2": selfie_base64
+            }
+        )
+
+        result = response.json()
+        confidence = result.get("confidence", 0)
+        verified = confidence >= THRESHOLD
+
+        return jsonify({
+            "verified": verified,
+            "confidence": confidence,
+            "faceplusplus_result": result
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/')
 def home():
