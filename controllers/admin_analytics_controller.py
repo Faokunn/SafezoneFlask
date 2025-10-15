@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from sqlalchemy.orm import sessionmaker
 from database.base import engine
 from services.admin_analytics_services import get_all_safe_zones_service, get_all_users_safe_zones_incidents_service, get_users_with_incidents_and_safe_zones_service, get_users_with_incidents_service, get_all_incidents, get_users_with_safe_zones_service
-
+from sqlalchemy.orm import joinedload
 Session = sessionmaker(bind=engine)
 session = Session()
 

@@ -4,6 +4,7 @@ from database.base import engine
 from models.incidentreport_model import IncidentReport
 from models.safezone_model import SafeZone
 from models.user_model import User
+from sqlalchemy.orm import joinedload
 
 Session = sessionmaker(bind=engine)
 
@@ -11,19 +12,34 @@ Session = sessionmaker(bind=engine)
 
 def get_all_users_safe_zones_incidents_service(session):
     try:
-        users = session.query(User).all()
-        incidents = session.query(IncidentReport).all()
-        safe_zones = session.query(SafeZone).all()
+        users = (
+            session.query(User)
+            .options(
+                joinedload(User.profile),
+                joinedload(User.safe_zones),
+                joinedload(User.incident_reports)
+            )
+            .all()
+        )
 
         result = {
-            "users": [user.to_dict() for user in users],
-            "incident_reports": [incident.to_dict() for incident in incidents],
-            "safe_zones": [safe_zone.to_dict() for safe_zone in safe_zones]
+            "users": [
+                {
+                    "id": user.id,
+                    "username": user.username,
+                    "email": user.email,
+                    "activity_status": user.profile.activity_status if user.profile else None,
+                    "profile_picture_url": user.profile.profile_picture_url if user.profile else None,
+                    "safe_zones": [sz.to_dict() for sz in user.safe_zones],
+                    "incident_reports": [ir.to_dict() for ir in user.incident_reports],
+                }
+                for user in users
+            ]
         }
 
         return result
     except Exception as e:
-        return str(e)
+        return {"error": str(e)}
     
 
 ## SAFEZONES AND INCIDENTS
