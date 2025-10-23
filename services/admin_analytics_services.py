@@ -53,27 +53,34 @@ def get_all_users_safe_zones_incidents_service(session):
     
 
 ## SAFEZONES AND INCIDENTS
-
 def get_users_with_incidents_and_safe_zones_service(session):
     try:
-        users = session.query(User).all()
+        users = (
+            session.query(User)
+            .options(
+                joinedload(User.profile),
+                joinedload(User.incident_reports),
+                joinedload(User.safe_zones)
+            )
+            .all()
+        )
+
         result = []
-
         for user in users:
-            user_data = {
+            result.append({
                 "id": user.id,
-                "username": user.username, 
-                "activity_status": user.profile.activity_status,
+                "username": user.username,
+                "activity_status": user.profile.activity_status if user.profile else None,
                 "email": user.email,
-                "profile_picture_url": user.profile.profile_picture_url if user.profile else None, 
-                "incident_reports": [incident.to_dict() for incident in user.incident_reports],
-                "safe_zones": [safe_zone.to_dict() for safe_zone in user.safe_zones]
-            }
-            result.append(user_data)
-
+                "profile_picture_url": user.profile.profile_picture_url if user.profile else None,
+                "incident_reports": [i.to_dict() for i in user.incident_reports],
+                "safe_zones": [s.to_dict() for s in user.safe_zones],
+            })
         return result
+
     except Exception as e:
-        return str(e)
+        return {"error": str(e)}
+
 
 ## INCIDENTS
 
